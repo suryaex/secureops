@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # SecureOps PRODUCTION deploy script (Controller)
 #
-# Supports: Ubuntu 20.04 / 22.04 / 24.04 / 25.04
-#           Debian 11 / 12 / 13
-#           Linux Mint 20+ / Pop!_OS 22+ / Elementary OS 7+
+# Supports: Ubuntu / Debian / Mint / Pop!_OS / Elementary  (apt)
+#           Fedora / RHEL / Rocky / Alma / CentOS Stream    (dnf/yum)
+#           openSUSE / SLES                                  (zypper)
+#           Arch / Manjaro / EndeavourOS                     (pacman)
 #
 # Usage:
 #   bash controller/deploy/deploy-prod.sh                    # uses defaults
@@ -42,34 +43,56 @@ detect_distro() {
     die "Cannot detect distro (/etc/os-release missing)."
   fi
 
-  case "$DISTRO_ID" in
-    ubuntu|debian|linuxmint|pop|elementary|kali|raspbian|neon) : ;;
-    *)
-      if [[ "$DISTRO_LIKE" == *debian* || "$DISTRO_LIKE" == *ubuntu* ]]; then :
-      else die "Unsupported distro: $DISTRO_ID. Need Ubuntu/Debian/derivative."
-      fi
-      ;;
-  esac
+  # Tentukan package manager berdasarkan family distro
+  if command -v apt-get >/dev/null 2>&1; then   PKG="apt"
+  elif command -v dnf  >/dev/null 2>&1;  then   PKG="dnf"
+  elif command -v yum  >/dev/null 2>&1;  then   PKG="yum"
+  elif command -v zypper >/dev/null 2>&1; then  PKG="zypper"
+  elif command -v pacman >/dev/null 2>&1; then  PKG="pacman"
+  else die "Tidak ada package manager yang dikenali (apt/dnf/yum/zypper/pacman)."
+  fi
 }
 
 detect_distro
-say "Detected: $PRETTY (id=$DISTRO_ID, version=$DISTRO_VERSION)"
+say "Detected: $PRETTY (id=$DISTRO_ID, pkg=$PKG)"
 [[ $EUID -ne 0 ]] && warn "Some steps need sudo — you may be prompted."
 
 export DEBIAN_FRONTEND=noninteractive
 
-# -------- 1) System packages --------
-say "Installing system packages…"
-sudo apt-get update -y
-sudo apt-get install -y --no-install-recommends \
-    python3 python3-venv python3-pip python3-dev \
-    libpam0g-dev build-essential \
-    libjpeg-dev zlib1g-dev libfreetype6-dev \
-    nginx \
-    curl gnupg ca-certificates \
-    rsync
+# -------- 1) System packages (lintas distro) --------
+say "Installing system packages via $PKG…"
+case "$PKG" in
+  apt)
+    sudo apt-get update -y
+    sudo apt-get install -y --no-install-recommends \
+        python3 python3-venv python3-pip python3-dev \
+        libpam0g-dev build-essential \
+        libjpeg-dev zlib1g-dev libfreetype6-dev \
+        nginx curl gnupg ca-certificates rsync
+    ;;
+  dnf|yum)
+    sudo $PKG install -y \
+        python3 python3-pip python3-devel \
+        pam-devel gcc gcc-c++ make \
+        libjpeg-turbo-devel zlib-devel freetype-devel \
+        nginx curl gnupg2 ca-certificates rsync
+    ;;
+  zypper)
+    sudo zypper --non-interactive install \
+        python3 python3-pip python3-devel \
+        pam-devel gcc gcc-c++ make \
+        libjpeg8-devel zlib-devel freetype2-devel \
+        nginx curl gpg2 ca-certificates rsync
+    ;;
+  pacman)
+    sudo pacman -Sy --noconfirm \
+        python python-pip pam base-devel \
+        libjpeg-turbo zlib freetype2 \
+        nginx curl gnupg ca-certificates rsync
+    ;;
+esac
 
-# -------- 2) Node.js LTS via NodeSource --------
+# -------- 2) Node.js LTS (lintas distro) --------
 NEED_NODE=1
 if command -v node >/dev/null 2>&1; then
   NODE_MAJ=$(node -v | sed 's/v//' | cut -d. -f1)
@@ -80,8 +103,23 @@ if command -v node >/dev/null 2>&1; then
 fi
 if [[ "$NEED_NODE" == "1" ]]; then
   say "Installing Node.js $NODE_VERSION LTS…"
-  curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash -
-  sudo apt-get install -y nodejs
+  case "$PKG" in
+    apt)
+      curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash -
+      sudo apt-get install -y nodejs
+      ;;
+    dnf|yum)
+      curl -fsSL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash -
+      sudo $PKG install -y nodejs
+      ;;
+    zypper)
+      sudo zypper --non-interactive install nodejs${NODE_VERSION} npm${NODE_VERSION} || \
+        sudo zypper --non-interactive install nodejs npm
+      ;;
+    pacman)
+      sudo pacman -S --noconfirm nodejs npm
+      ;;
+  esac
 fi
 
 info "Node:   $(node --version)"
@@ -119,19 +157,75 @@ sudo mkdir -p "$FRONTEND_ROOT"
 sudo rsync -a --delete "$FRONTEND_DIR/dist/" "$FRONTEND_ROOT/"
 sudo chown -R www-data:www-data "$FRONTEND_ROOT" 2>/dev/null || true
 
-# -------- 7) nginx ----------
+# -------- 7) nginx (lintas distro) ----------
 say "Writing nginx site config…"
-sed -e "s|{{SERVER_NAME}}|$SERVER_NAME|g" \
-    -e "s|{{FRONTEND_ROOT}}|$FRONTEND_ROOT|g" \
-    "$SCRIPT_DIR/nginx.conf" \
-  | sudo tee "/etc/nginx/sites-available/$NGINX_SITE" >/dev/null
+RENDERED_CONF="$(sed -e "s|{{SERVER_NAME}}|$SERVER_NAME|g" -e "s|{{FRONTEND_ROOT}}|$FRONTEND_ROOT|g" "$SCRIPT_DIR/nginx.conf")"
 
-sudo ln -sf "/etc/nginx/sites-available/$NGINX_SITE" "/etc/nginx/sites-enabled/$NGINX_SITE"
-sudo rm -f /etc/nginx/sites-enabled/default || true
+if [[ -d /etc/nginx/sites-available ]]; then
+  # Debian/Ubuntu: pakai sites-available + sites-enabled
+  echo "$RENDERED_CONF" | sudo tee "/etc/nginx/sites-available/$NGINX_SITE" >/dev/null
+  sudo mkdir -p /etc/nginx/sites-enabled
+  sudo ln -sf "/etc/nginx/sites-available/$NGINX_SITE" "/etc/nginx/sites-enabled/$NGINX_SITE"
+  sudo rm -f /etc/nginx/sites-enabled/default || true
+else
+  # RHEL/SUSE/Arch: pakai conf.d
+  echo "$RENDERED_CONF" | sudo tee "/etc/nginx/conf.d/$NGINX_SITE.conf" >/dev/null
+  # Nonaktifkan server default kalau ada
+  sudo sed -i 's/^\(\s*listen\s*80.*default_server\)/#\1/' /etc/nginx/nginx.conf 2>/dev/null || true
+fi
+
+# Pastikan http {} memuat conf.d / sites-enabled (Arch sering belum)
+if ! grep -rq "include.*sites-enabled\|include.*conf.d" /etc/nginx/nginx.conf 2>/dev/null; then
+  sudo sed -i '/http\s*{/a\    include /etc/nginx/conf.d/*.conf;' /etc/nginx/nginx.conf 2>/dev/null || true
+fi
+
+# -------- 7b) Free port 80/443 (Fedora/RHEL sering jalan httpd/Apache) --------
+free_web_ports() {
+  # Service web lain yang biasa merebut :80 — matikan supaya nginx bisa bind.
+  local conflicts="httpd apache2 caddy lighttpd"
+  for svc in $conflicts; do
+    if systemctl is-active --quiet "$svc" 2>/dev/null; then
+      warn "Service '$svc' memakai port 80 — menonaktifkannya untuk nginx…"
+      sudo systemctl disable --now "$svc" 2>/dev/null || true
+    fi
+  done
+
+  # Cek apa yang masih memegang :80 (selain nginx).
+  local holder=""
+  if command -v ss >/dev/null 2>&1; then
+    holder="$(sudo ss -ltnp 'sport = :80' 2>/dev/null | grep -v nginx | grep -oP 'users:\(\("\K[^"]+' | head -n1 || true)"
+  elif command -v lsof >/dev/null 2>&1; then
+    holder="$(sudo lsof -iTCP:80 -sTCP:LISTEN -t 2>/dev/null | head -n1 || true)"
+  fi
+  if [[ -n "$holder" ]]; then
+    warn "Port 80 masih dipakai proses '$holder'. Menghentikan paksa…"
+    sudo systemctl stop "$holder" 2>/dev/null || sudo pkill -x "$holder" 2>/dev/null || true
+    sleep 1
+  fi
+}
+free_web_ports
+
+# SELinux (Fedora/RHEL): izinkan nginx connect ke backend uvicorn (port 8000).
+if command -v setsebool >/dev/null 2>&1; then
+  sudo setsebool -P httpd_can_network_connect 1 2>/dev/null || true
+fi
+
+# firewalld (Fedora/RHEL): buka 80/443 kalau aktif.
+if command -v firewall-cmd >/dev/null 2>&1 && sudo firewall-cmd --state >/dev/null 2>&1; then
+  sudo firewall-cmd --permanent --add-service=http  2>/dev/null || true
+  sudo firewall-cmd --permanent --add-service=https 2>/dev/null || true
+  sudo firewall-cmd --reload 2>/dev/null || true
+fi
 
 say "Testing nginx config…"
 sudo nginx -t
-sudo systemctl reload nginx || sudo systemctl restart nginx
+sudo systemctl enable nginx 2>/dev/null || true
+# Stop dulu supaya tidak ada master nginx lama yang masih bind :80, lalu start bersih.
+sudo systemctl restart nginx || {
+  warn "nginx gagal start — menampilkan diagnosa port 80:"
+  sudo ss -ltnp 'sport = :80' 2>/dev/null || sudo lsof -iTCP:80 -sTCP:LISTEN 2>/dev/null || true
+  die "nginx tidak bisa bind ke port 80. Lihat diagnosa di atas."
+}
 
 # -------- 8) systemd backend ----------
 say "Installing systemd unit…"
