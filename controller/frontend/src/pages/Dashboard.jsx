@@ -94,19 +94,20 @@ export default function Dashboard() {
   const downloadReport = async () => {
     setDownloading(true)
     try {
+      // Ambil HTML lalu BUKA di tab baru (bukan trigger download .html yang
+      // di-flag "berbahaya" oleh SmartScreen/Brave). User bisa Ctrl+P → Save PDF.
       const res = await api.get('/dashboard/report', { responseType: 'blob' })
-      const ts = new Date().toISOString().replace(/[:T]/g, '-').slice(0, 19)
       const blob = new Blob([res.data], { type: 'text/html' })
       const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `secureops-report-${ts}.html`
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      window.URL.revokeObjectURL(url)
+      const win = window.open(url, '_blank')
+      if (!win) {
+        // Popup diblokir — fallback ke navigasi langsung
+        window.location.href = url
+      }
+      // Bersihkan setelah tab sempat memuat
+      setTimeout(() => window.URL.revokeObjectURL(url), 60000)
     } catch (err) {
-      alert('Failed to generate report: ' + (err.response?.data?.detail || err.message))
+      alert('Gagal membuat laporan: ' + (err.response?.data?.detail || err.message))
     } finally {
       setDownloading(false)
     }
@@ -143,8 +144,8 @@ export default function Dashboard() {
             </>
           ) : (
             <>
-              <span className="material-symbols-outlined text-lg">download</span>
-              <span className="hidden sm:inline">Download Report</span>
+              <span className="material-symbols-outlined text-lg">description</span>
+              <span className="hidden sm:inline">Lihat Laporan</span>
             </>
           )}
         </button>

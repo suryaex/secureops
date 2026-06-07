@@ -230,8 +230,16 @@ def download_report(
 
 </body></html>"""
 
+    # Tampilkan INLINE (buka di tab browser), BUKAN download .html.
+    # Download .html dengan attachment di-flag berbahaya oleh SmartScreen/Brave.
+    # Inline aman + user bisa Ctrl+P → Save as PDF.
     filename = f"secureops-report-{now.strftime('%Y%m%d-%H%M%S')}.html"
     return HTMLResponse(
         content=html,
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={
+            "Content-Disposition": f'inline; filename="{filename}"',
+            "X-Content-Type-Options": "nosniff",
+            "Cache-Control": "no-store",
+            "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; img-src data:;",
+        },
     )

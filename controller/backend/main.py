@@ -36,6 +36,24 @@ from routers import (
 
 models.Base.metadata.create_all(bind=engine)
 
+
+def _auto_migrate():
+    """Migrasi ringan: tambah kolom baru ke tabel lama (SQLite ADD COLUMN)."""
+    from sqlalchemy import text, inspect
+    try:
+        insp = inspect(engine)
+        if "monitored_servers" in insp.get_table_names():
+            cols = {c["name"] for c in insp.get_columns("monitored_servers")}
+            if "candidates" not in cols:
+                with engine.begin() as conn:
+                    conn.execute(text("ALTER TABLE monitored_servers ADD COLUMN candidates TEXT"))
+    except Exception as e:
+        print(f"[migrate] skip: {e}")
+
+
+if not AGENT_MODE:
+    _auto_migrate()
+
 app = FastAPI(
     title="SecureOps API" + (" — AGENT" if AGENT_MODE else ""),
     version="1.2.0",

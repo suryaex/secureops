@@ -10,6 +10,7 @@ The controller-to-agent network is assumed to be private (Tailscale, WireGuard,
 or LAN). Even so, the shared key prevents lateral movement.
 """
 import asyncio
+import json
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
@@ -89,27 +90,86 @@ async def agent_post_json(srv: models.MonitoredServer, path: str,
     return r.json()
 
 
-async def ping_agent(srv: models.MonitoredServer, db: Session) -> dict:
-    """Quick health probe — updates DB last_seen/last_status."""
+async def _probe_one(url: str, api_key: str, timeout: float = 4.0) -> bool:
+    """True jika /api/health di url merespons 200."""
     try:
         async with _client() as c:
             r = await c.get(
-                f"{srv.api_url.rstrip('/')}/api/health",
-                headers={"X-Agent-Key": srv.api_key},
-                timeout=5,
+                f"{url.rstrip('/')}/api/health",
+                headers={"X-Agent-Key": api_key},
+                timeout=timeout,
             )
-        if r.status_code == 200:
-            srv.last_status = "online"
-            srv.last_error  = None
-        else:
-            srv.last_status = "offline"
-            srv.last_error  = f"HTTP {r.status_code}"
-    except Exception as e:
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
+def _candidate_urls(srv: models.MonitoredServer) -> list:
+    """
+    Susun daftar URL kandidat untuk dicoba, urut prioritas:
+    1. api_url aktif saat ini (yang terakhir berhasil)
+    2. daftar candidates JSON (Tailscale, LAN, hostname)
+    Tanpa duplikat, mempertahankan urutan.
+    """
+    urls = []
+    if srv.api_url:
+        urls.append(srv.api_url.rstrip("/"))
+    if srv.candidates:
+        try:
+            for u in json.loads(srv.candidates):
+                u = (u or "").rstrip("/")
+                if u and u not in urls:
+                    urls.append(u)
+        except Exception:
+            pass
+    return urls
+
+
+async def ping_agent(srv: models.MonitoredServer, db: Session) -> dict:
+    """
+    Health probe cerdas multi-jaringan.
+
+    Mencoba SEMUA URL kandidat (api_url aktif + Tailscale + LAN + hostname).
+    URL pertama yang merespons dipromosikan menjadi api_url aktif, sehingga
+    agent tetap terjangkau baik di LAN yang sama maupun lintas jaringan via VPN.
+    """
+    candidates = _candidate_urls(srv)
+    if not candidates:
         srv.last_status = "offline"
-        srv.last_error  = str(e)[:300]
-    srv.last_seen = datetime.utcnow()
+        srv.last_error  = "Tidak ada URL kandidat"
+        srv.last_seen   = datetime.utcnow()
+        db.commit()
+        return {"status": "offline", "error": srv.last_error}
+
+    # Coba URL aktif dulu (cepat), lalu kandidat lain secara paralel
+    active = candidates[0]
+    if await _probe_one(active, srv.api_key):
+        srv.last_status = "online"
+        srv.last_error  = None
+        srv.last_seen   = datetime.utcnow()
+        db.commit()
+        return {"status": "online", "active_url": active}
+
+    # URL aktif gagal — uji semua kandidat lain bersamaan
+    others = candidates[1:]
+    if others:
+        results = await asyncio.gather(*(_probe_one(u, srv.api_key) for u in others))
+        for url, ok in zip(others, results):
+            if ok:
+                # Promosikan kandidat yang berhasil jadi api_url aktif
+                srv.api_url     = url
+                srv.last_status = "online"
+                srv.last_error  = None
+                srv.last_seen   = datetime.utcnow()
+                db.commit()
+                return {"status": "online", "active_url": url, "switched": True}
+
+    # Semua kandidat gagal
+    srv.last_status = "offline"
+    srv.last_error  = f"Semua {len(candidates)} URL tidak terjangkau"
+    srv.last_seen   = datetime.utcnow()
     db.commit()
-    return {"status": srv.last_status, "error": srv.last_error}
+    return {"status": "offline", "error": srv.last_error, "tried": candidates}
 
 
 async def ping_all(db: Session) -> dict:

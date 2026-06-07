@@ -4,6 +4,8 @@
 Only available on the Controller (not on Agents).
 Admin role required for create/update/delete; auditors can list & ping.
 """
+import asyncio
+import json
 import secrets
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -51,12 +53,13 @@ class ServerCreate(BaseModel):
 
 
 class ServerUpdate(BaseModel):
-    name:     Optional[str] = None
-    hostname: Optional[str] = None
-    api_url:  Optional[str] = None
-    api_key:  Optional[str] = None
-    tags:     Optional[str] = None
-    enabled:  Optional[bool] = None
+    name:       Optional[str] = None
+    hostname:   Optional[str] = None
+    api_url:    Optional[str] = None
+    api_key:    Optional[str] = None
+    tags:       Optional[str] = None
+    enabled:    Optional[bool] = None
+    candidates: Optional[List[str]] = None   # daftar URL kandidat (opsional)
 
 
 class ServerOut(BaseModel):
@@ -75,11 +78,16 @@ class ServerOut(BaseModel):
 
 
 def _serialize(s: models.MonitoredServer, *, include_key=False) -> dict:
+    try:
+        cand = json.loads(s.candidates) if s.candidates else []
+    except Exception:
+        cand = []
     base = {
         "id":          s.id,
         "name":        s.name,
         "hostname":    s.hostname,
         "api_url":     s.api_url,
+        "candidates":  cand,
         "api_key_set": bool(s.api_key),
         "tags":        s.tags,
         "enabled":     s.enabled,
@@ -158,6 +166,9 @@ def update_server(server_id: int, body: ServerUpdate, request: Request,
         if val is not None:
             if field == "api_url":
                 val = val.rstrip("/")
+            elif field == "candidates":
+                # Simpan sebagai JSON string di kolom Text
+                val = json.dumps([u.rstrip("/") for u in val if u])
             setattr(srv, field, val)
     db.commit(); db.refresh(srv)
 
@@ -459,19 +470,25 @@ def get_install_script(token: str, request: Request,
 
 
 class AutoRegisterBody(BaseModel):
-    token:    str
-    hostname: str = Field(..., max_length=200)
-    api_url:  str = Field(..., max_length=300)
-    api_key:  str = Field(..., min_length=20, max_length=200)
+    token:      str
+    hostname:   str = Field(..., max_length=200)
+    api_url:    str = Field(..., max_length=300)          # URL utama (kompatibilitas lama)
+    api_key:    str = Field(..., min_length=20, max_length=200)
+    candidates: Optional[List[str]] = None               # daftar semua URL yang mungkin
 
 
 @router.post("/auto-register")
-def auto_register(body: AutoRegisterBody, request: Request,
-                  db: Session = Depends(get_db)):
+async def auto_register(body: AutoRegisterBody, request: Request,
+                        db: Session = Depends(get_db)):
     """
-    PUBLIC endpoint — called by the agent at the end of install to self-register.
-    Consumes the one-time join token and creates a MonitoredServer row.
+    PUBLIC endpoint — dipanggil agent di akhir instalasi untuk mendaftar sendiri.
+
+    Agent mengirim DAFTAR URL kandidat (Tailscale, LAN, hostname). Controller
+    menguji satu per satu dan memilih yang benar-benar terjangkau, sehingga
+    koneksi otomatis berhasil baik di LAN sama maupun lintas jaringan via VPN.
     """
+    from agent_client import _probe_one  # hindari circular import di module-load
+
     tok = db.query(models.JoinToken).filter(models.JoinToken.token == body.token).first()
     if not tok:
         raise HTTPException(404, "Invalid token")
@@ -480,20 +497,41 @@ def auto_register(body: AutoRegisterBody, request: Request,
     if tok.expires_at < datetime.utcnow():
         raise HTTPException(410, "Token expired")
 
-    # Double-check name still free (race condition guard)
     if db.query(models.MonitoredServer).filter(models.MonitoredServer.name == tok.name).first():
         raise HTTPException(409, f"Server name '{tok.name}' was registered by someone else")
+
+    # Susun daftar kandidat (api_url + candidates), dedup & rapikan
+    raw = [body.api_url] + (body.candidates or [])
+    candidates = []
+    for u in raw:
+        u = (u or "").rstrip("/")
+        if u and u not in candidates:
+            candidates.append(u)
+
+    # Uji setiap kandidat dari sisi controller — temukan yang reachable
+    active_url = candidates[0] if candidates else body.api_url.rstrip("/")
+    probe_status = "unknown"
+    if candidates:
+        results = await asyncio.gather(*(_probe_one(u, body.api_key) for u in candidates))
+        reachable = [u for u, ok in zip(candidates, results) if ok]
+        if reachable:
+            active_url   = reachable[0]
+            probe_status = "online"
+        else:
+            probe_status = "offline"  # tetap daftarkan; ping berkala akan retry
 
     srv = models.MonitoredServer(
         name=tok.name,
         hostname=body.hostname.strip(),
-        api_url=body.api_url.rstrip("/"),
+        api_url=active_url,
+        candidates=json.dumps(candidates) if candidates else None,
         api_key=body.api_key,
         tags=tok.tags or "",
         enabled=True,
         is_local=False,
-        last_status="online",
+        last_status=probe_status,
         last_seen=datetime.utcnow(),
+        last_error=None if probe_status == "online" else "Menunggu probe; periksa konektivitas jaringan/VPN",
     )
     db.add(srv)
     db.commit()
@@ -508,7 +546,7 @@ def auto_register(body: AutoRegisterBody, request: Request,
         admin_id=None,
         admin_username=f"agent:{srv.name}",
         action="Auto-Register Server",
-        details=f"Agent '{srv.name}' joined via token ({body.api_url})",
+        details=f"Agent '{srv.name}' joined; {len(candidates)} kandidat URL, aktif={active_url} ({probe_status})",
         ip_address=request.client.host or "unknown",
         status="success",
     ))
@@ -518,4 +556,7 @@ def auto_register(body: AutoRegisterBody, request: Request,
         "status":       "registered",
         "server_id":    srv.id,
         "server_name":  srv.name,
+        "active_url":   active_url,
+        "probe_status": probe_status,
+        "candidates":   candidates,
     }

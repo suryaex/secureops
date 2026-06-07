@@ -212,14 +212,33 @@ for i in {1..15}; do
 done
 
 # -------- 12) Auto-register ----------
-USE_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || hostname)
+# Prioritas Tailscale IP, lalu IP en0/en1
+TS_IP="$(/Applications/Tailscale.app/Contents/MacOS/Tailscale ip -4 2>/dev/null | head -n1 || tailscale ip -4 2>/dev/null | head -n1 || echo "")"
+USE_IP="${TS_IP:-$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || hostname)}"
 AUTO_REGISTERED=0
+
+# Kumpulkan kandidat: Tailscale + en0 + en1
+build_candidates_json() {
+  local out="" seen=""
+  add() {
+    local ip="$1"; [[ -z "$ip" ]] && return
+    [[ "$ip" =~ ^(127\.|169\.254\.) ]] && return
+    local url="http://$ip:$PORT"
+    [[ "$seen" == *"|$url|"* ]] && return
+    seen="$seen|$url|"; [[ -n "$out" ]] && out="$out,"; out="$out\"$url\""
+  }
+  add "$TS_IP"
+  add "$(ipconfig getifaddr en0 2>/dev/null)"
+  add "$(ipconfig getifaddr en1 2>/dev/null)"
+  echo "[$out]"
+}
+CANDIDATES_JSON="$(build_candidates_json)"
 
 if [[ -n "${SECUREOPS_JOIN_TOKEN:-}" && -n "${SECUREOPS_CONTROLLER_URL:-}" ]]; then
     say "Auto-registering with controller at $SECUREOPS_CONTROLLER_URL ..."
 
     REGISTER_PAYLOAD=$(cat <<EOF
-{"token":"$SECUREOPS_JOIN_TOKEN","hostname":"$(hostname)","api_url":"http://$USE_IP:$PORT","api_key":"$KEY"}
+{"token":"$SECUREOPS_JOIN_TOKEN","hostname":"$(hostname)","api_url":"http://$USE_IP:$PORT","api_key":"$KEY","candidates":$CANDIDATES_JSON}
 EOF
 )
 

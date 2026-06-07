@@ -425,25 +425,83 @@ if ($healthy) {
 }
 
 # ============================== AUTO-REGISTER ==============================
-$PrimaryIP = (Get-NetIPAddress -AddressFamily IPv4 -PrefixOrigin Dhcp,Manual -ErrorAction SilentlyContinue |
-              Where-Object { $_.IPAddress -notmatch '^(169\.254|127\.)' } |
-              Select-Object -First 1).IPAddress
+# Deteksi IP untuk controller. PRIORITAS: Tailscale IP (100.64-127.x.x).
+# Controller menjangkau agent via mesh Tailscale, BUKAN via LAN/VirtualBox.
+$PrimaryIP = $null
+
+# 1) Coba Tailscale IP via CLI (paling andal)
+$tsExe = Get-Command tailscale -ErrorAction SilentlyContinue
+if (-not $tsExe) {
+    foreach ($p in @("$env:ProgramFiles\Tailscale\tailscale.exe", "${env:ProgramFiles(x86)}\Tailscale\tailscale.exe")) {
+        if (Test-Path $p) { $tsExe = $p; break }
+    }
+}
+if ($tsExe) {
+    try {
+        $tsIP = (& $tsExe ip -4 2>$null | Select-Object -First 1)
+        if ($tsIP -and $tsIP -match '^100\.') { $PrimaryIP = $tsIP.Trim() }
+    } catch {}
+}
+
+# 2) Fallback: cari adapter dengan IP range Tailscale CGNAT (100.64.0.0/10)
+if ([string]::IsNullOrWhiteSpace($PrimaryIP)) {
+    $tsAddr = Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+              Where-Object { $_.IPAddress -match '^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.' } |
+              Select-Object -First 1
+    if ($tsAddr) { $PrimaryIP = $tsAddr.IPAddress }
+}
+
+# 3) Fallback terakhir: IP LAN biasa (kalau controller & agent satu jaringan)
+if ([string]::IsNullOrWhiteSpace($PrimaryIP)) {
+    $lan = Get-NetIPAddress -AddressFamily IPv4 -PrefixOrigin Dhcp,Manual -ErrorAction SilentlyContinue |
+           Where-Object { $_.IPAddress -notmatch '^(169\.254|127\.|192\.168\.56\.)' } |
+           Select-Object -First 1
+    if ($lan) { $PrimaryIP = $lan.IPAddress }
+    Warn "IP Tailscale tidak terdeteksi - memakai IP LAN: $PrimaryIP"
+    Warn "Jika controller di jaringan berbeda, EDIT URL server di UI ke IP Tailscale."
+}
+
 if ([string]::IsNullOrWhiteSpace($PrimaryIP)) { $PrimaryIP = "127.0.0.1" }
+Info "IP untuk registrasi ke controller: $PrimaryIP"
+
+# Kumpulkan SEMUA alamat kandidat: Tailscale + setiap IPv4 LAN + hostname.
+# Controller akan menguji satu per satu dan memakai yang reachable.
+$Candidates = [System.Collections.Generic.List[string]]::new()
+$Candidates.Add("http://${PrimaryIP}:$Port")   # IP prioritas (Tailscale jika ada)
+
+# Semua IPv4 lokal (kecuali loopback, link-local, VirtualBox host-only)
+Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue |
+    Where-Object { $_.IPAddress -notmatch '^(169\.254|127\.|192\.168\.56\.)' } |
+    ForEach-Object {
+        $u = "http://$($_.IPAddress):$Port"
+        if (-not $Candidates.Contains($u)) { $Candidates.Add($u) }
+    }
+
+# Hostname (berguna jika ada DNS internal / MagicDNS Tailscale)
+$fqdn = $env:COMPUTERNAME
+try {
+    $tsHost = (& $tsExe status --json 2>$null | ConvertFrom-Json).Self.DNSName
+    if ($tsHost) { $fqdn = $tsHost.TrimEnd('.') }
+} catch {}
+$hostUrl = "http://${fqdn}:$Port"
+if (-not $Candidates.Contains($hostUrl)) { $Candidates.Add($hostUrl) }
 
 $AutoRegistered = $false
 if (-not [string]::IsNullOrWhiteSpace($JoinToken) -and -not [string]::IsNullOrWhiteSpace($ControllerURL)) {
     Say "Auto-registering with controller at $ControllerURL ..."
+    Info "Kandidat URL: $($Candidates -join ', ')"
     $payload = @{
-        token    = $JoinToken
-        hostname = $env:COMPUTERNAME
-        api_url  = "http://${PrimaryIP}:$Port"
-        api_key  = $AgentKey
+        token      = $JoinToken
+        hostname   = $env:COMPUTERNAME
+        api_url    = "http://${PrimaryIP}:$Port"
+        api_key    = $AgentKey
+        candidates = $Candidates
     } | ConvertTo-Json -Compress
     try {
         $resp = Invoke-WebRequest -Uri "$ControllerURL/api/servers/auto-register" `
                                   -Method POST -Body $payload `
                                   -ContentType "application/json" `
-                                  -UseBasicParsing -TimeoutSec 10 -ErrorAction Stop
+                                  -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop
         Info "Auto-registration response: $($resp.Content)"
         $AutoRegistered = $true
     } catch {

@@ -62,14 +62,14 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Username */}
               <div>
-                <label className="text-gray-700 text-sm font-medium mb-1.5 block">Linux Username</label>
+                <label className="text-gray-700 text-sm font-medium mb-1.5 block">Username / Email</label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xl">person</span>
                   <input
                     type="text"
                     value={form.username}
                     onChange={e => setForm(p => ({ ...p, username: e.target.value }))}
-                    placeholder="e.g. superadmin, root"
+                    placeholder="superadmin atau email@domain"
                     autoComplete="username"
                     spellCheck="false"
                     autoCapitalize="off"

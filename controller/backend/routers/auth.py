@@ -61,15 +61,18 @@ def login(request: Request, body: schemas.LoginRequest, db: Session = Depends(ge
                 detail="Invalid Linux username or password",
             )
 
-    # --------- 2) DB fallback ---------
-    user = db.query(models.Admin).filter(models.Admin.username == username).first()
+    # --------- 2) DB fallback (login via username ATAU email) ---------
+    ident = username  # bisa berupa username atau email
+    user = db.query(models.Admin).filter(
+        (models.Admin.username == ident) | (models.Admin.email == ident.lower())
+    ).first()
     if not user or not verify_password(body.password, user.password_hash):
-        _log(db, username=username, action="Login Failed",
-             details=f"Invalid credentials for user: {username}",
+        _log(db, username=ident, action="Login Failed",
+             details=f"Invalid credentials for: {ident}",
              ip=ip, status_str="failed")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid username or password",
+            detail="Username/email atau kata sandi salah",
         )
 
     user.last_login = datetime.utcnow()

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# SecureOps AGENT installer
+# SecureOps AGENT installer (Linux — lintas distro)
 #
-# Supports: Ubuntu 20.04 / 22.04 / 24.04 / 25.04
-#           Debian 11 / 12 / 13
-#           Linux Mint, Pop!_OS, Elementary, Kali, Raspbian
+# Supports: Debian/Ubuntu family (apt), Fedora/RHEL/Rocky/Alma (dnf/yum),
+#           openSUSE (zypper), Arch/Manjaro (pacman), Alpine (apk + OpenRC).
+#           Init: systemd (default) atau OpenRC (Alpine).
 #
 # Usage (RECOMMENDED — agent generates its own key):
 #   sudo bash install.sh
@@ -49,7 +49,7 @@ die()  { echo -e "${RED}ERROR: $*${NC}"; exit 1; }
 # sedang didaftarkan ke controller (baru/ganti). Bersihkan key & service lama.
 if [[ -n "${SECUREOPS_JOIN_TOKEN:-}" ]]; then
   say "Mode join controller terdeteksi — membersihkan instalasi lama…"
-  systemctl stop secureops-agent 2>/dev/null || true
+  systemctl stop secureops-agent 2>/dev/null || rc-service secureops-agent stop 2>/dev/null || true
   # Hapus key lama supaya key BARU di-generate untuk controller baru
   if [[ -z "$KEY" && -f "$KEY_FILE" ]]; then
     info "Menghapus key lama di $KEY_FILE (pindah controller)"
@@ -78,7 +78,7 @@ mkdir -p "$(dirname "$KEY_FILE")"
 echo -n "$KEY" > "$KEY_FILE"
 chmod 0600 "$KEY_FILE"
 
-# -------- Detect distro ----------
+# -------- Detect distro & package manager ----------
 if [[ -f /etc/os-release ]]; then
   # shellcheck disable=SC1091
   . /etc/os-release
@@ -87,27 +87,50 @@ if [[ -f /etc/os-release ]]; then
   DISTRO_MAJOR="${VERSION_ID%%.*}"
   PRETTY="${PRETTY_NAME:-$DISTRO_ID}"
 else
-  die "Cannot detect distro."
+  die "Cannot detect distro (/etc/os-release missing)."
 fi
 
-case "$DISTRO_ID" in
-  ubuntu|debian|linuxmint|pop|elementary|kali|raspbian|neon) : ;;
-  *)
-    if [[ "$DISTRO_LIKE" == *debian* || "$DISTRO_LIKE" == *ubuntu* ]]; then :
-    else die "Unsupported distro: $DISTRO_ID"
-    fi
-    ;;
-esac
+if   command -v apt-get >/dev/null 2>&1; then PKG="apt"
+elif command -v dnf     >/dev/null 2>&1; then PKG="dnf"
+elif command -v yum     >/dev/null 2>&1; then PKG="yum"
+elif command -v zypper  >/dev/null 2>&1; then PKG="zypper"
+elif command -v pacman  >/dev/null 2>&1; then PKG="pacman"
+elif command -v apk     >/dev/null 2>&1; then PKG="apk"
+else die "Tidak ada package manager yang dikenali (apt/dnf/yum/zypper/pacman/apk)."
+fi
 
-say "Detected: $PRETTY"
+say "Detected: $PRETTY (pkg=$PKG)"
 export DEBIAN_FRONTEND=noninteractive
 
-# -------- 1) System packages ----------
-say "Installing system packages…"
-apt-get update -y
-apt-get install -y --no-install-recommends \
-    python3 python3-venv python3-pip python3-dev \
-    git curl ca-certificates build-essential
+# -------- 1) System packages (lintas distro) ----------
+say "Installing system packages via $PKG…"
+case "$PKG" in
+  apt)
+    apt-get update -y
+    apt-get install -y --no-install-recommends \
+        python3 python3-venv python3-pip python3-dev \
+        git curl ca-certificates build-essential
+    ;;
+  dnf|yum)
+    $PKG install -y \
+        python3 python3-pip python3-devel \
+        git curl ca-certificates gcc gcc-c++ make
+    ;;
+  zypper)
+    zypper --non-interactive install \
+        python3 python3-pip python3-devel \
+        git curl ca-certificates gcc gcc-c++ make
+    ;;
+  pacman)
+    pacman -Sy --noconfirm \
+        python python-pip git curl ca-certificates base-devel
+    ;;
+  apk)
+    apk add --no-cache \
+        python3 py3-pip python3-dev \
+        git curl ca-certificates build-base
+    ;;
+esac
 
 # -------- 2) Tailscale ----------
 if [[ "$SKIP_TS" != "1" ]]; then
@@ -138,8 +161,19 @@ fi
 
 # -------- 4) Python venv ----------
 say "Setting up Python venv…"
-cd "$INSTALL_DIR/agent/backend"
-[[ -d venv ]] || python3 -m venv venv
+cd "$INSTALL_DIR/agent-linux/backend"
+if [[ ! -d venv ]]; then
+  if ! python3 -m venv venv 2>/dev/null; then
+    warn "python3 -m venv gagal — mencoba install paket venv & ulang…"
+    case "$PKG" in
+      apt)     apt-get install -y python3-venv ;;
+      dnf|yum) $PKG install -y python3-virtualenv || true ;;
+      *)       pip3 install --quiet virtualenv 2>/dev/null || true ;;
+    esac
+    python3 -m venv venv 2>/dev/null || python3 -m virtualenv venv || \
+      die "Gagal membuat virtual environment Python."
+  fi
+fi
 # shellcheck disable=SC1091
 source venv/bin/activate
 pip install --quiet --upgrade pip setuptools wheel
@@ -148,9 +182,15 @@ deactivate
 
 info "Python: $(python3 --version)"
 
-# -------- 5) systemd unit ----------
-say "Writing systemd unit…"
-cat > /etc/systemd/system/secureops-agent.service <<EOF
+# -------- 5) Service (systemd ATAU OpenRC) ----------
+BACKEND="$INSTALL_DIR/agent-linux/backend"
+GUNICORN="$BACKEND/venv/bin/gunicorn"
+GUNICORN_CONF="$BACKEND/gunicorn.conf.py"
+
+if command -v systemctl >/dev/null 2>&1 && [[ -d /run/systemd/system ]]; then
+  INIT_SYS="systemd"
+  say "Writing systemd unit…"
+  cat > /etc/systemd/system/secureops-agent.service <<EOF
 [Unit]
 Description=SecureOps Agent
 After=network.target tailscaled.service
@@ -160,9 +200,9 @@ Wants=network-online.target
 Type=simple
 User=root
 Group=root
-WorkingDirectory=$INSTALL_DIR/agent/backend
+WorkingDirectory=$BACKEND
 
-Environment="PATH=$INSTALL_DIR/agent/backend/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PATH=$BACKEND/venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 Environment="PYTHONUNBUFFERED=1"
 Environment="SECUREOPS_AGENT_KEY=$KEY"
 Environment="SECUREOPS_BIND=0.0.0.0:$PORT"
@@ -172,7 +212,7 @@ Environment="SECUREOPS_SHELL_CMD=$SHELL_CMD"
 Environment="SECUREOPS_RECORD_SESSIONS=$RECORD"
 Environment="SECUREOPS_RECORD_DIR=$RECORD_DIR_VAR"
 
-ExecStart=$INSTALL_DIR/agent/backend/venv/bin/gunicorn -c $INSTALL_DIR/agent/backend/gunicorn.conf.py main:app
+ExecStart=$GUNICORN -c $GUNICORN_CONF main:app
 
 Restart=always
 RestartSec=5
@@ -183,6 +223,35 @@ SyslogIdentifier=secureops-agent
 [Install]
 WantedBy=multi-user.target
 EOF
+elif command -v rc-update >/dev/null 2>&1; then
+  INIT_SYS="openrc"
+  say "Writing OpenRC service (Alpine)…"
+  cat > /etc/init.d/secureops-agent <<EOF
+#!/sbin/openrc-run
+name="secureops-agent"
+description="SecureOps Agent"
+command="$GUNICORN"
+command_args="-c $GUNICORN_CONF main:app"
+command_background=true
+directory="$BACKEND"
+pidfile="/run/secureops-agent.pid"
+output_log="/var/log/secureops-agent.log"
+error_log="/var/log/secureops-agent.log"
+export PATH="$BACKEND/venv/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export PYTHONUNBUFFERED=1
+export SECUREOPS_AGENT_KEY="$KEY"
+export SECUREOPS_BIND="0.0.0.0:$PORT"
+export SECUREOPS_WORKERS=2
+export SECUREOPS_SHELL_USER="$SHELL_USER"
+export SECUREOPS_SHELL_CMD="$SHELL_CMD"
+export SECUREOPS_RECORD_SESSIONS="$RECORD"
+export SECUREOPS_RECORD_DIR="$RECORD_DIR_VAR"
+depend() { need net; }
+EOF
+  chmod +x /etc/init.d/secureops-agent
+else
+  die "Init system tidak dikenali (butuh systemd atau OpenRC)."
+fi
 
 # Firewall
 if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "Status: active"; then
@@ -196,9 +265,14 @@ if [[ "$RECORD" == "1" ]]; then
   info "Recordings → $RECORD_DIR_VAR"
 fi
 
-systemctl daemon-reload
-systemctl enable secureops-agent
-systemctl restart secureops-agent
+if [[ "$INIT_SYS" == "systemd" ]]; then
+  systemctl daemon-reload
+  systemctl enable secureops-agent
+  systemctl restart secureops-agent
+else
+  rc-update add secureops-agent default 2>/dev/null || true
+  rc-service secureops-agent restart 2>/dev/null || rc-service secureops-agent start
+fi
 
 # Wait for service to actually be ready (up to 15s)
 say "Waiting for agent to become healthy..."
@@ -211,23 +285,51 @@ for i in {1..15}; do
 done
 
 say "Agent status:"
-systemctl --no-pager --lines=3 status secureops-agent || true
+if command -v systemctl >/dev/null 2>&1 && [[ -d /run/systemd/system ]]; then
+  systemctl --no-pager --lines=3 status secureops-agent || true
+else
+  rc-service secureops-agent status || true
+fi
 
 LAN_IP=$(hostname -I 2>/dev/null | awk '{print $1}')
 TS_IP="${TS_IP:-}"
 USE_IP="${TS_IP:-$LAN_IP}"
 AUTO_REGISTERED=0
 
+# ---------- Kumpulkan SEMUA alamat kandidat ----------
+# Controller akan menguji satu per satu & memakai yang reachable (LAN/VPN).
+build_candidates_json() {
+  local seen=""
+  local out=""
+  add() {
+    local ip="$1"
+    [[ -z "$ip" ]] && return
+    # Lewati loopback, link-local, docker, VirtualBox host-only
+    [[ "$ip" =~ ^(127\.|169\.254\.|172\.1[6-9]\.|172\.2[0-9]\.|172\.3[0-1]\.|192\.168\.56\.) ]] && return
+    local url="http://$ip:$PORT"
+    [[ "$seen" == *"|$url|"* ]] && return
+    seen="$seen|$url|"
+    [[ -n "$out" ]] && out="$out,"
+    out="$out\"$url\""
+  }
+  add "$TS_IP"                                    # Tailscale (prioritas)
+  for ip in $(hostname -I 2>/dev/null); do add "$ip"; done   # semua IPv4 lokal
+  echo "[$out]"
+}
+CANDIDATES_JSON="$(build_candidates_json)"
+
 # ---------- Auto-registration to controller (if join token provided) ----------
 if [[ -n "${SECUREOPS_JOIN_TOKEN:-}" && -n "${SECUREOPS_CONTROLLER_URL:-}" ]]; then
   say "Auto-registering with controller at $SECUREOPS_CONTROLLER_URL ..."
+  info "Kandidat URL: $CANDIDATES_JSON"
 
   REGISTER_PAYLOAD=$(cat <<EOF
 {
   "token":    "$SECUREOPS_JOIN_TOKEN",
   "hostname": "$(hostname)",
   "api_url":  "http://$USE_IP:$PORT",
-  "api_key":  "$KEY"
+  "api_key":  "$KEY",
+  "candidates": $CANDIDATES_JSON
 }
 EOF
 )

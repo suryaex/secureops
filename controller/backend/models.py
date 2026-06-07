@@ -102,7 +102,8 @@ class MonitoredServer(Base):
     id          = Column(Integer, primary_key=True, index=True)
     name        = Column(String(100), unique=True, nullable=False)     # e.g. "web-prod"
     hostname    = Column(String(200), nullable=False)                  # display only
-    api_url     = Column(String(300), nullable=False)                  # http://100.x.x.x:8001
+    api_url     = Column(String(300), nullable=False)                  # URL aktif yang terbukti reachable
+    candidates  = Column(Text, nullable=True)                          # JSON list URL kandidat (Tailscale, LAN, dll)
     api_key     = Column(String(200), nullable=False)                  # shared secret
     tags        = Column(String(500), nullable=True)                   # e.g. "production,web"
     enabled     = Column(Boolean, default=True)
