@@ -84,12 +84,12 @@
 
 - ✅ **Domain** (misal `secureops.site` dari Rumahweb / Niagahoster / Cloudflare Registrar)
 - ✅ **Server controller** — VPS atau fisik, minimal:
-  - Ubuntu 22.04+/24.04+ atau Debian 12+
+  - **Distro Linux apa pun** (Ubuntu/Debian/Fedora/RHEL/Rocky/Alma/openSUSE/Arch) — x86-64 **atau** ARM
   - RAM 2 GB
   - Storage 20 GB
   - Akses SSH root
 - ✅ **Server agent** (sebanyak yang mau dimonitor) — spek minimal:
-  - Ubuntu/Debian/derivative
+  - **Semua distro Linux** (apt/dnf/yum/zypper/pacman/apk) + Windows/macOS — x86-64 atau ARM
   - RAM 1 GB
   - Storage 10 GB
 - ✅ **Akun gratis**:
@@ -106,9 +106,19 @@
 | Pop!_OS | 22.04+ | ✅ |
 | Elementary OS | 7+ | ✅ |
 | Kali Linux | 2024.x+ | ✅ (untuk lab pentest) |
-| Raspberry Pi OS | Bookworm arm64 | ✅ (IoT monitoring) |
+| Fedora / RHEL / Rocky / Alma | 39+ / 9+ | ✅ |
+| openSUSE / SLES | Leap 15+ / Tumbleweed | ✅ |
+| Arch / Manjaro / EndeavourOS | rolling | ✅ |
+| Alpine Linux | 3.18+ (OpenRC) | ✅ |
+| Raspberry Pi OS / Orange Pi / Armbian | arm64 **&** armv7 | ✅ (IoT monitoring) |
 
-> Installer otomatis deteksi distro dan adapt langkah-langkahnya.
+> Installer otomatis deteksi **package manager** (apt/dnf/yum/zypper/pacman/apk) **dan**
+> arsitektur CPU (x86-64 / ARM). Di ARM 32-bit (armv7) toolchain Rust dipasang otomatis
+> agar dependensi native ter-compile.
+>
+> 💡 **Coexist dengan StorageHub:** kalau host yang sama juga menjalankan StorageHub,
+> SecureOps tetap pakai port `:80`/`:443` + backend `:8000`, sedangkan StorageHub di
+> `:8080`/`:8010` — tidak bentrok. Lihat [`INTEROP.md`](INTEROP.md).
 
 ---
 
@@ -133,7 +143,8 @@ Tabel command paling sering dipakai (untuk yang sudah familiar):
 
 ## 1.1 Siapkan Server Controller
 
-Pilih VPS atau server fisik dengan Ubuntu 22.04 atau 24.04 (recommended). Bisa pakai:
+Pilih VPS atau server fisik. **Distro apa pun didukung** (Ubuntu/Debian/Fedora/RHEL/openSUSE/Arch),
+x86-64 maupun ARM. Contoh penyedia:
 
 - **Niagahoster Cloud VPS** (lokal Indonesia, paling cepat)
 - **DigitalOcean**, **Vultr**, **Hetzner** (luar negeri)
@@ -943,7 +954,7 @@ Installer otomatis:
 
 ```bash
 sudo git -C /opt/secureops-agent pull
-sudo /opt/secureops-agent/agent/backend/venv/bin/pip install -r /opt/secureops-agent/agent/backend/requirements.txt
+sudo /opt/secureops-agent/agent-linux/backend/venv/bin/pip install -r /opt/secureops-agent/agent-linux/backend/requirements.txt
 sudo systemctl restart secureops-agent
 ```
 

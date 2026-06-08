@@ -23,7 +23,7 @@
 | Folder | Kegunaan | Install di |
 |--------|----------|------------|
 | `controller/` | Backend lengkap + UI React glass + konfigurasi nginx | **1 server pusat** (Linux only) |
-| `agent-linux/` | Agent untuk distro Linux/Debian | Server/desktop Linux |
+| `agent-linux/` | Agent untuk **semua distro Linux** (apt/dnf/yum/zypper/pacman/apk) — x86-64 & ARM | Server/desktop Linux |
 | `agent-windows/` | Agent untuk Windows 10/11 & Server 2019+ | Workstation/server Windows |
 | `agent-macos/` | Agent untuk macOS 12+ | Mac mini, MacBook |
 
@@ -68,6 +68,8 @@ sudo certbot --nginx -d secureops.site   # atau pakai Cloudflare Tunnel
 | Auth | Linux PAM + JWT |
 | Database | SQLite (berbasis file) |
 | Mesh VPN | Tailscale (controller ↔ agents) |
+| Arsitektur | x86-64 **dan** ARM (arm64 / armv7 — Raspberry Pi, Orange Pi) |
+| Lintas distro | apt · dnf/yum · zypper · pacman · apk (systemd & OpenRC) |
 | Web server | nginx |
 | Services | systemd |
 
@@ -78,13 +80,14 @@ sudo certbot --nginx -d secureops.site   # atau pakai Cloudflare Tunnel
 - [controller/README.md](controller/README.md) — fitur controller & dev guide
 - [controller/deploy/MOBILE.md](controller/deploy/MOBILE.md) — bangun APK Android / IPA iOS
 - [controller/deploy/MULTI-SERVER.md](controller/deploy/MULTI-SERVER.md) — arsitektur multi-server deep-dive
-- [agent/README.md](agent/README.md) — setup agent & daftar endpoint
+- [agent-linux/README.md](agent-linux/README.md) — setup agent & daftar endpoint
+- [INTEROP.md](INTEROP.md) — jalan berdampingan dengan **StorageHub** (peta port: SecureOps `:80`/`:8000`, StorageHub `:8080`/`:8010`) + dukungan ARM
 
 ## 🌐 OS yang Didukung untuk Agent
 
 Installer otomatis deteksi OS. Tinggal pilih dari dropdown saat **+ Add Server**:
 
-### 🐧 Linux (semua berbasis Debian/Ubuntu)
+### 🐧 Linux (semua distro — x86-64 & ARM)
 
 | Distro | Versi | Status |
 |--------|-------|:------:|
@@ -94,7 +97,15 @@ Installer otomatis deteksi OS. Tinggal pilih dari dropdown saat **+ Add Server**
 | Pop!_OS | 22.04+ | ✅ |
 | Elementary OS | 7+ | ✅ |
 | Kali Linux | 2024.x+ | ✅ |
-| Raspberry Pi OS | Bookworm (arm64) | ✅ |
+| Fedora / RHEL / Rocky / Alma | 39+ / 9+ | ✅ |
+| openSUSE / SLES | Leap 15+ / Tumbleweed | ✅ |
+| Arch / Manjaro / EndeavourOS | rolling | ✅ |
+| Alpine Linux | 3.18+ (OpenRC) | ✅ |
+| Raspberry Pi OS / Orange Pi / Armbian | arm64 **&** armv7 | ✅ |
+
+> Installer mendeteksi package manager (apt/dnf/yum/zypper/pacman/apk) **dan** arsitektur
+> CPU otomatis. Di ARM 32-bit (armv7) toolchain Rust dipasang otomatis agar dependensi
+> native ter-compile.
 
 ### 🪟 Windows
 
@@ -125,7 +136,8 @@ Untuk Apple Silicon (M1/M2/M3) maupun Intel.
 
 | Versi | Tanggal | Catatan |
 |-------|---------|---------|
-| **v1.5** | Mei 2026 | Auto-register agent (one-liner), terminal recording, dukungan Ubuntu 24+ |
+| **v1.6** | Juni 2026 | Lintas semua distro Linux + ARM (Pi/Orange Pi), coexist dengan StorageHub, fix nginx Fedora |
+| v1.5 | Mei 2026 | Auto-register agent (one-liner), terminal recording, dukungan Ubuntu 24+ |
 | v1.4 | Mei 2026 | SSH terminal realtime, virtual keys mobile |
 | v1.3 | Mei 2026 | Multi-server arsitektur, Luminous Security UI |
 | v1.2 | Mei 2026 | PWA, Capacitor, deploy production |
