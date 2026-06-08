@@ -102,6 +102,11 @@ fi
 say "Detected: $PRETTY (pkg=$PKG)"
 export DEBIAN_FRONTEND=noninteractive
 
+# -------- CPU architecture (x86-64 / ARM Raspberry Pi / Orange Pi) --------
+ARCH="$(uname -m)"
+case "$ARCH" in armv7l|armv6l|armhf) IS_ARM32=1 ;; *) IS_ARM32=0 ;; esac
+say "Architecture: $ARCH (arm32=$IS_ARM32)"
+
 # -------- 1) System packages (lintas distro) ----------
 say "Installing system packages via $PKG…"
 case "$PKG" in
@@ -109,12 +114,12 @@ case "$PKG" in
     apt-get update -y
     apt-get install -y --no-install-recommends \
         python3 python3-venv python3-pip python3-dev \
-        git curl ca-certificates build-essential
+        git curl ca-certificates build-essential libffi-dev libssl-dev
     ;;
   dnf|yum)
     $PKG install -y \
         python3 python3-pip python3-devel \
-        git curl ca-certificates gcc gcc-c++ make
+        git curl ca-certificates gcc gcc-c++ make libffi-devel libopenssl-devel libffi-devel openssl-devel
     ;;
   zypper)
     zypper --non-interactive install \
@@ -123,12 +128,12 @@ case "$PKG" in
     ;;
   pacman)
     pacman -Sy --noconfirm \
-        python python-pip git curl ca-certificates base-devel
+        python python-pip git curl ca-certificates base-devel libffi openssl
     ;;
   apk)
     apk add --no-cache \
         python3 py3-pip python3-dev \
-        git curl ca-certificates build-base
+        git curl ca-certificates build-base libffi-dev openssl-dev
     ;;
 esac
 
@@ -160,6 +165,18 @@ else
 fi
 
 # -------- 4) Python venv ----------
+  # ARM 32-bit: watchfiles/uvloop (uvicorn[standard]) need a Rust toolchain.
+  if [[ "${IS_ARM32:-0}" == "1" ]] && ! command -v cargo >/dev/null 2>&1; then
+    say "ARM 32-bit — installing Rust toolchain for native wheels…"
+    case "$PKG" in
+      apt)      apt-get install -y cargo rustc ;;
+      dnf|yum)  $PKG install -y cargo rust ;;
+      zypper)   zypper --non-interactive install cargo rust ;;
+      pacman)   pacman -S --noconfirm rust ;;
+      apk)      apk add --no-cache cargo rust ;;
+    esac
+  fi
+
 say "Setting up Python venv…"
 cd "$INSTALL_DIR/agent-linux/backend"
 if [[ ! -d venv ]]; then

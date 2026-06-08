@@ -59,6 +59,11 @@ say "Detected: $PRETTY (id=$DISTRO_ID, pkg=$PKG)"
 
 export DEBIAN_FRONTEND=noninteractive
 
+# -------- CPU architecture (x86-64 / ARM Raspberry Pi / Orange Pi) --------
+ARCH="$(uname -m)"
+case "$ARCH" in armv7l|armv6l|armhf) IS_ARM32=1 ;; *) IS_ARM32=0 ;; esac
+say "Architecture: $ARCH (arm32=$IS_ARM32)"
+
 # -------- 1) System packages (lintas distro) --------
 say "Installing system packages via $PKG…"
 case "$PKG" in
@@ -66,27 +71,27 @@ case "$PKG" in
     sudo apt-get update -y
     sudo apt-get install -y --no-install-recommends \
         python3 python3-venv python3-pip python3-dev \
-        libpam0g-dev build-essential \
+        libpam0g-dev build-essential libffi-dev libssl-dev \
         libjpeg-dev zlib1g-dev libfreetype6-dev \
         nginx curl gnupg ca-certificates rsync
     ;;
   dnf|yum)
     sudo $PKG install -y \
         python3 python3-pip python3-devel \
-        pam-devel gcc gcc-c++ make \
+        pam-devel gcc gcc-c++ make libffi-devel openssl-devel \
         libjpeg-turbo-devel zlib-devel freetype-devel \
         nginx curl gnupg2 ca-certificates rsync
     ;;
   zypper)
     sudo zypper --non-interactive install \
         python3 python3-pip python3-devel \
-        pam-devel gcc gcc-c++ make \
+        pam-devel gcc gcc-c++ make libffi-devel libopenssl-devel \
         libjpeg8-devel zlib-devel freetype2-devel \
         nginx curl gpg2 ca-certificates rsync
     ;;
   pacman)
     sudo pacman -Sy --noconfirm \
-        python python-pip pam base-devel \
+        python python-pip pam base-devel libffi openssl \
         libjpeg-turbo zlib freetype2 \
         nginx curl gnupg ca-certificates rsync
     ;;
@@ -127,6 +132,17 @@ info "npm:    $(npm --version)"
 info "Python: $(python3 --version)"
 
 # -------- 3) Backend venv ----------
+# ARM 32-bit: bcrypt 4.x + cryptography have no armv7 wheels — need Rust to build.
+if [[ "${IS_ARM32:-0}" == "1" ]] && ! command -v cargo >/dev/null 2>&1; then
+  say "ARM 32-bit — installing Rust toolchain (bcrypt/cryptography build)…"
+  case "$PKG" in
+    apt)      sudo apt-get install -y cargo rustc ;;
+    dnf|yum)  sudo $PKG install -y cargo rust ;;
+    zypper)   sudo zypper --non-interactive install cargo rust ;;
+    pacman)   sudo pacman -S --noconfirm rust ;;
+  esac
+fi
+
 say "Setting up backend Python venv…"
 cd "$BACKEND_DIR"
 if [[ ! -d venv ]]; then python3 -m venv venv; fi
@@ -149,6 +165,7 @@ if [[ -f package-lock.json ]]; then
 else
   npm install --no-audit --no-fund
 fi
+[[ "$ARCH" == arm* || "$ARCH" == aarch64 ]] && export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=512}"
 npm run build
 
 # -------- 6) Publish ----------
