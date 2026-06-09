@@ -57,6 +57,7 @@ sudo certbot --nginx -d secureops.site   # atau pakai Cloudflare Tunnel
 - 🛡️ **Role-based** — anggota `sudo`/`wheel` jadi admin; lainnya jadi auditor (read-only)
 - 📄 **Report otomatis** — export laporan HTML/PDF satu klik dari Dashboard
 - ⚡ **Auto-register agent** — tambah server cuma 1 command (mirip Tailscale auth-key)
+- 🔌 **LogSync** — kumpulkan log ARM/mikrokontroler & appliance jaringan (router/switch/firewall via syslog), backup otomatis ke **StorageHub**
 
 ## 🧱 Tech Stack
 
@@ -81,6 +82,9 @@ sudo certbot --nginx -d secureops.site   # atau pakai Cloudflare Tunnel
 - [controller/deploy/MOBILE.md](controller/deploy/MOBILE.md) — bangun APK Android / IPA iOS
 - [controller/deploy/MULTI-SERVER.md](controller/deploy/MULTI-SERVER.md) — arsitektur multi-server deep-dive
 - [agent-linux/README.md](agent-linux/README.md) — setup agent & daftar endpoint
+- [EXTENSIONS.md](EXTENSIONS.md) — **LogSync**: ingest log ARM/mikrokontroler + syslog appliance → backup ke StorageHub
+- [SECURITY.md](SECURITY.md) — postur keamanan & konfigurasi hardening
+- `uninstall.sh` — copot bersih (controller/agent) sebelum major update (`--purge` hapus data)
 - [INTEROP.md](INTEROP.md) — jalan berdampingan dengan **StorageHub** (peta port: SecureOps `:80`/`:8000`, StorageHub `:8080`/`:8010`) + dukungan ARM
 
 ## 🌐 OS yang Didukung untuk Agent
@@ -136,7 +140,8 @@ Untuk Apple Silicon (M1/M2/M3) maupun Intel.
 
 | Versi | Tanggal | Catatan |
 |-------|---------|---------|
-| **v1.6** | Juni 2026 | Lintas semua distro Linux + ARM (Pi/Orange Pi), coexist dengan StorageHub, fix nginx Fedora |
+| **v1.7** | Juni 2026 | LogSync (backup log ARM/MCU/appliance ke StorageHub), security hardening (JWT, headers), uninstall scripts |
+| v1.6 | Juni 2026 | Lintas semua distro Linux + ARM (Pi/Orange Pi), coexist dengan StorageHub, fix nginx Fedora |
 | v1.5 | Mei 2026 | Auto-register agent (one-liner), terminal recording, dukungan Ubuntu 24+ |
 | v1.4 | Mei 2026 | SSH terminal realtime, virtual keys mobile |
 | v1.3 | Mei 2026 | Multi-server arsitektur, Luminous Security UI |

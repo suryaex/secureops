@@ -90,6 +90,31 @@ if os.getenv("SECUREOPS_BEHIND_PROXY") == "1":
     except ImportError:
         pass
 
+
+# -------- Security headers (defense-in-depth) --------
+_HSTS = os.getenv("SECUREOPS_ENABLE_HSTS", "0") == "1"
+
+
+@app.middleware("http")
+async def _security_headers(request, call_next):
+    resp = await call_next(request)
+    resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+    resp.headers.setdefault("X-Frame-Options", "DENY")
+    resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    resp.headers.setdefault("X-XSS-Protection", "0")
+    resp.headers.setdefault(
+        "Permissions-Policy",
+        "geolocation=(), microphone=(), camera=(), payment=()",
+    )
+    # Only advertise HSTS when explicitly enabled (i.e. TLS is terminated upstream).
+    if _HSTS:
+        resp.headers.setdefault(
+            "Strict-Transport-Security",
+            "max-age=31536000; includeSubDomains",
+        )
+    return resp
+
+
 # -------- Routers --------
 if not AGENT_MODE:
     # Auth & user management only on the controller
@@ -97,6 +122,12 @@ if not AGENT_MODE:
     app.include_router(users.router,  prefix="/api/users", tags=["Users"])
     app.include_router(servers.router, prefix="/api/servers", tags=["Servers"])
     app.include_router(terminal.router, prefix="/api/terminal", tags=["Terminal"])
+    # LogSync extension — ARM/MCU/appliance log ingest + StorageHub backup
+    try:
+        from extensions.logsync.router import router as logsync_router
+        app.include_router(logsync_router, prefix="/api/logsync", tags=["LogSync"])
+    except Exception as _e:  # pragma: no cover
+        print(f"[logsync] router not loaded: {_e}")
 
 app.include_router(permission_audit.router, prefix="/api/permission-audit", tags=["Permission Audit"])
 app.include_router(sudo_monitor.router,     prefix="/api/sudo-monitor",     tags=["Sudo Monitor"])
@@ -115,17 +146,25 @@ def seed_default_admin():
     db = SessionLocal()
     try:
         if not db.query(models.Admin).filter(models.Admin.username == "admin").first():
+            # SECURITY: never ship a fixed default password. Use
+            # SECUREOPS_ADMIN_PASSWORD if provided, else generate a random one
+            # and print it ONCE to the logs (operator must capture it).
+            import secrets as _secrets
+            admin_pw = os.getenv("SECUREOPS_ADMIN_PASSWORD", "").strip()
+            if not admin_pw:
+                admin_pw = _secrets.token_urlsafe(12)
+                print("=" * 64)
+                print("  SecureOps bootstrap admin created")
+                print(f"  username: admin")
+                print(f"  password: {admin_pw}")
+                print("  ^ shown ONCE — change it after first login. On a Linux")
+                print("    controller, prefer logging in with your real PAM account.")
+                print("=" * 64)
             db.add(models.Admin(
                 username="admin",
                 email="admin@secureops.local",
-                password_hash=hash_password("Admin@123"),
+                password_hash=hash_password(admin_pw),
                 role="admin",
-            ))
-            db.add(models.Admin(
-                username="auditor",
-                email="auditor@secureops.local",
-                password_hash=hash_password("Auditor@123"),
-                role="auditor",
             ))
             db.commit()
 
@@ -145,6 +184,20 @@ def seed_default_admin():
             db.commit()
     finally:
         db.close()
+
+
+@app.on_event("startup")
+async def _start_logsync():
+    """Launch the LogSync scheduler + syslog collector (controller only)."""
+    if AGENT_MODE:
+        return
+    import asyncio
+    try:
+        from extensions.logsync import service as _svc, syslog_server as _sys
+        asyncio.create_task(_svc.scheduler_loop())
+        await _sys.start()
+    except Exception as _e:  # pragma: no cover
+        print(f"[logsync] background tasks not started: {_e}")
 
 
 @app.get("/api/health")

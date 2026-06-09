@@ -39,7 +39,42 @@ import models
 AGENT_MODE = os.getenv("SECUREOPS_AGENT_MODE", "0") == "1"
 AGENT_KEY  = os.getenv("SECUREOPS_AGENT_KEY", "")
 
-SECRET_KEY = "secureops-secret-key-change-in-production-2024"
+def _load_or_create_secret() -> str:
+    """
+    JWT signing key resolution (NEVER ship a hardcoded secret — a public default
+    would let anyone forge admin tokens):
+      1. SECUREOPS_JWT_SECRET env var (preferred for multi-host / containers).
+      2. A persisted random secret file (auto-generated once, chmod 600).
+    """
+    env = os.getenv("SECUREOPS_JWT_SECRET", "").strip()
+    if env:
+        return env
+    import secrets as _secrets
+    secret_path = os.getenv(
+        "SECUREOPS_JWT_SECRET_FILE",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), ".jwt_secret"),
+    )
+    try:
+        if os.path.exists(secret_path):
+            with open(secret_path, "r", encoding="utf-8") as fh:
+                val = fh.read().strip()
+                if val:
+                    return val
+        val = _secrets.token_urlsafe(64)
+        with open(secret_path, "w", encoding="utf-8") as fh:
+            fh.write(val)
+        try:
+            os.chmod(secret_path, 0o600)
+        except OSError:
+            pass
+        return val
+    except OSError:
+        # Read-only FS fallback: ephemeral per-process secret (tokens reset on
+        # restart, but never a shared public default).
+        return _secrets.token_urlsafe(64)
+
+
+SECRET_KEY = _load_or_create_secret()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_HOURS = 8
 

@@ -112,3 +112,55 @@ class MonitoredServer(Base):
     last_status = Column(String(50), default="unknown")                # online / offline / unknown
     last_error  = Column(String(500), nullable=True)
     created_at  = Column(DateTime, server_default=func.now())
+
+
+# ============================================================================
+#  LogSync extension — collect logs from ARM boards / microcontrollers /
+#  network appliances (router/switch/firewall) and back them up to StorageHub.
+# ============================================================================
+class DeviceLog(Base):
+    """A single log record ingested from an external device.
+
+    Sources:
+      * `http`   — microcontroller / ARM board POSTing to /api/logsync/ingest
+      * `syslog` — router/switch/firewall via remote syslog (RFC 3164/5424)
+    """
+    __tablename__ = "device_logs"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    device_id   = Column(String(120), index=True, nullable=False)   # logical device name/key id
+    source      = Column(String(20), default="http")                # http | syslog
+    source_ip   = Column(String(64), nullable=True)
+    severity    = Column(String(20), default="info")                # info|warning|error|critical
+    facility    = Column(String(40), nullable=True)                 # syslog facility (optional)
+    message     = Column(Text, nullable=False)
+    received_at = Column(DateTime, server_default=func.now(), index=True)
+    backed_up   = Column(Boolean, default=False, index=True)        # already shipped to StorageHub
+
+
+class LogDevice(Base):
+    """A registered ARM/IoT/appliance device that may ship logs."""
+    __tablename__ = "log_devices"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    device_id   = Column(String(120), unique=True, nullable=False)
+    label       = Column(String(160), nullable=True)
+    kind        = Column(String(40), default="microcontroller")     # microcontroller|sbc|router|switch|firewall
+    device_key  = Column(String(200), nullable=False)               # shared secret (hashed-compare)
+    last_seen   = Column(DateTime, nullable=True)
+    enabled     = Column(Boolean, default=True)
+    created_at  = Column(DateTime, server_default=func.now())
+
+
+class LogBackupRun(Base):
+    """History of a backup push to StorageHub."""
+    __tablename__ = "log_backup_runs"
+
+    id          = Column(Integer, primary_key=True, index=True)
+    started_at  = Column(DateTime, server_default=func.now())
+    finished_at = Column(DateTime, nullable=True)
+    status      = Column(String(20), default="running")             # running|success|failed
+    records     = Column(Integer, default=0)
+    bytes_sent  = Column(Integer, default=0)
+    remote_path = Column(String(400), nullable=True)
+    detail      = Column(Text, nullable=True)

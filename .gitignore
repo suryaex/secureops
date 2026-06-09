@@ -1,0 +1,33 @@
+# ── Python ──
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ── Node / frontend ──
+node_modules/
+dist/
+.vite/
+
+# ── Databases & runtime data ──
+*.db
+*.sqlite
+*.sqlite3
+secureops.db
+
+# ── Secrets (never commit) ──
+.jwt_secret
+*.jwt_secret
+.env
+*.env
+!.env.example
+
+# ── Recordings / logs ──
+*.cast
+*.log
+
+# ── OS noise ──
+.DS_Store
+Thumbs.db
