@@ -17,11 +17,14 @@
 6. [TAHAP 3 — Tambah Server Agent](#-tahap-3--tambah-server-agent-zero-touch-)
 7. [TAHAP 4 — Mobile App (Opsional)](#-tahap-4--mobile-app-opsional)
 8. [TAHAP 5 — Setup Tim & Pengguna](#-tahap-5--setup-tim--pengguna)
-9. [Operasi Sehari-hari (Day-2 Ops)](#-operasi-sehari-hari-day-2-ops)
-10. [Troubleshooting](#-troubleshooting)
-11. [Tips Pro](#-tips-pro)
-12. [Glosarium & FAQ](#-glosarium--faq)
-13. [Checklist Final](#-checklist-final)
+9. [TAHAP 6 — Ekstensi LogSync (Opsional)](#-tahap-6--ekstensi-logsync-opsional)
+10. [Keamanan (Hardening)](#-keamanan-hardening)
+11. [Uninstall / Copot Total](#-uninstall--copot-total-sebelum-major-update--ganti-versi)
+12. [Operasi Sehari-hari (Day-2 Ops)](#-operasi-sehari-hari-day-2-ops)
+13. [Troubleshooting](#-troubleshooting)
+14. [Tips Pro](#-tips-pro)
+15. [Glosarium & FAQ](#-glosarium--faq)
+16. [Checklist Final](#-checklist-final)
 
 ---
 
@@ -933,6 +936,117 @@ Login sebagai admin → sidebar **Users** → **+ Add New User**:
 
 ---
 
+# 🔌 TAHAP 6 — Ekstensi LogSync (Opsional)
+
+Backup log dari perangkat kecil — **ARM/mikrokontroler** (ESP32, Raspberry/Orange Pi)
+dan **appliance jaringan** (router/switch/firewall) — lalu kirim otomatis ke
+**StorageHub**. Semua fitur ini **mati secara default**; aktifkan lewat env.
+
+## 6.1 Aktifkan backup ke StorageHub
+
+Di **controller** (edit unit systemd atau `controller/backend/.env`), lalu restart:
+
+```bash
+SECUREOPS_STORAGEHUB_URL=http://<host-storagehub>:8080
+SECUREOPS_STORAGEHUB_API_KEY=<salah satu SERVICE_API_KEYS milik StorageHub>
+SECUREOPS_LOGSYNC_INTERVAL_MIN=15        # 0 = matikan scheduler
+sudo systemctl restart secureops-backend
+```
+
+Di **StorageHub** (`.env`), tambah service key lalu restart:
+
+```bash
+SERVICE_API_KEYS=$(openssl rand -hex 32)
+```
+
+Cek: `GET /api/logsync/status` (JWT admin) → `"backup_configured": true`.
+Jalankan manual: `POST /api/logsync/backup/run`.
+
+## 6.2 Mikrokontroler / board ARM (HTTP)
+
+Daftarkan device sekali (admin) → dapat `device_key` sekali tampil:
+
+```bash
+curl -X POST https://secureops.site/api/logsync/devices \
+  -H "Authorization: Bearer <ADMIN_JWT>" -H "Content-Type: application/json" \
+  -d '{"device_id":"sensor-01","label":"ESP32 Lab","kind":"microcontroller"}'
+```
+
+Device kirim log (tanpa akun SecureOps):
+
+```bash
+curl -X POST https://secureops.site/api/logsync/ingest \
+  -H "X-Device-Id: sensor-01" -H "X-Device-Key: <device_key>" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"suhu=41C pintu=terbuka","severity":"warning"}'
+```
+
+## 6.3 Router / switch / firewall (syslog)
+
+Perangkat ini tak bisa pasang agent, tapi mendukung **remote syslog**. Aktifkan
+collector di controller:
+
+```bash
+SECUREOPS_SYSLOG_ENABLED=1
+SECUREOPS_SYSLOG_PORT=5514       # port tinggi (tanpa root); 514 hanya jika boleh bind low-port
+sudo firewall-cmd --add-port=5514/udp --permanent && sudo firewall-cmd --reload  # atau: ufw allow 5514/udp
+sudo systemctl restart secureops-backend
+```
+
+Arahkan appliance ke `udp://<ip-controller>:5514` — contoh Cisco/MikroTik/pfSense/
+OpenWRT ada di **[EXTENSIONS.md](EXTENSIONS.md)**.
+
+---
+
+# 🔒 Keamanan (Hardening)
+
+SecureOps sudah aman secara default, tapi untuk produksi set ini:
+
+```bash
+# JWT: jangan pakai default. Boleh dikosongkan (auto-generate file .jwt_secret 600),
+# atau set eksplisit untuk multi-host:
+SECUREOPS_JWT_SECRET=$(openssl rand -base64 48)
+
+# Admin bootstrap: tanpa env, password random dicetak SEKALI ke log saat pertama jalan.
+SECUREOPS_ADMIN_PASSWORD=<password-kuat>
+
+SECUREOPS_BEHIND_PROXY=1          # percaya header X-Forwarded-* dari nginx
+SECUREOPS_ENABLE_HSTS=1           # hanya kalau sudah HTTPS penuh
+SECUREOPS_CORS_ORIGINS=https://secureops.site,capacitor://localhost
+```
+
+- TLS diterminasi di nginx/Cloudflare; jangan expose port backend ke publik.
+- Agent tetap di mesh Tailscale/WireGuard; jangan buka `:8001` ke internet.
+- Detail lengkap: **[SECURITY.md](SECURITY.md)**.
+
+---
+
+# 🧹 Uninstall / Copot Total (sebelum major update / ganti versi)
+
+Pakai script bawaan — auto-deteksi controller/agent:
+
+```bash
+# Controller atau agent Linux:
+cd ~/secureops          # (atau folder repo)
+sudo bash uninstall.sh           # stop + hapus service/file, DATABASE DISIMPAN
+sudo bash uninstall.sh --purge   # SEKALIAN hapus database, config, log, user
+```
+
+Agent Windows (PowerShell admin):
+```powershell
+powershell -ExecutionPolicy Bypass -File agent-windows\deploy\uninstall.ps1
+# tambah -Purge untuk hapus data
+```
+
+Agent macOS:
+```bash
+sudo bash agent-macos/deploy/uninstall.sh           # atau --purge
+```
+
+Setelah copot, install versi baru seperti Tahap 1.
+
+---
+
 # 🛠️ Operasi Sehari-hari (Day-2 Ops)
 
 ## Update ke Versi Terbaru
@@ -946,9 +1060,16 @@ sudo bash controller/deploy/deploy-prod.sh
 ```
 
 Installer otomatis:
-- Re-install dependencies (kalau ada perubahan)
+- Re-install dependencies (kalau ada perubahan, termasuk lintas-distro & ARM)
 - Re-build frontend
 - Restart backend service
+
+> ⚠️ Kalau `git pull` mengeluh **"divergent branches"** (riwayat repo pernah
+> ditulis ulang), samakan paksa dengan remote:
+> ```bash
+> cd ~/secureops && git fetch origin && git reset --hard origin/main
+> ```
+> Database (`secureops.db`) tidak terpengaruh (ter-ignore git).
 
 ### Di Setiap Agent:
 

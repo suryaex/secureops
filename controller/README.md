@@ -129,9 +129,31 @@ Set di `/etc/systemd/system/secureops-backend.service`:
 | `SECUREOPS_BEHIND_PROXY` | `1` | Trust X-Forwarded-* dari nginx |
 | `SECUREOPS_LOGLEVEL` | `info` | Log level (debug/info/warning/error) |
 
+### Keamanan (v1.7+)
+
+| Variable | Default | Fungsi |
+|----------|---------|--------|
+| `SECUREOPS_JWT_SECRET` | auto-generate `.jwt_secret` (600) | Kunci tanda tangan JWT — **jangan** pakai default publik |
+| `SECUREOPS_ADMIN_PASSWORD` | random (dicetak sekali) | Password admin bootstrap |
+| `SECUREOPS_ENABLE_HSTS` | `0` | Kirim header HSTS (hanya saat HTTPS penuh) |
+
+### LogSync (backup log ke StorageHub)
+
+| Variable | Default | Fungsi |
+|----------|---------|--------|
+| `SECUREOPS_STORAGEHUB_URL` | — | URL StorageHub (mis. `http://host:8080`) |
+| `SECUREOPS_STORAGEHUB_API_KEY` | — | Service key (cocok dengan `SERVICE_API_KEYS` StorageHub) |
+| `SECUREOPS_LOGSYNC_INTERVAL_MIN` | `15` | Interval backup (0 = mati) |
+| `SECUREOPS_SYSLOG_ENABLED` | `0` | Aktifkan collector syslog (router/switch/firewall) |
+| `SECUREOPS_SYSLOG_PORT` | `5514` | Port syslog UDP/TCP |
+
+Endpoint: `/api/logsync/*` — detail di **[../EXTENSIONS.md](../EXTENSIONS.md)**.
+
 ## 📚 Dokumentasi Lain
 
 - **[../PANDUAN-INSTALASI.md](../PANDUAN-INSTALASI.md)** — Panduan instalasi lengkap
+- **[../EXTENSIONS.md](../EXTENSIONS.md)** — LogSync: ingest ARM/MCU + syslog appliance → backup StorageHub
+- **[../SECURITY.md](../SECURITY.md)** — Postur keamanan & hardening
 - **[deploy/MOBILE.md](deploy/MOBILE.md)** — Build APK Android / IPA iOS
 - **[deploy/MULTI-SERVER.md](deploy/MULTI-SERVER.md)** — Arsitektur multi-server detail
 
