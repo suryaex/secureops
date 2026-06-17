@@ -67,6 +67,12 @@ Buka `http://<ip-server>/` (port di `SECUREOPS_HTTP_PORT`, default 80). Karena
 container tidak melihat akun host, **login pakai admin DB** (`SECUREOPS_ADMIN_PASSWORD`
 atau email). Untuk login PAM dengan akun OS asli, pakai cara **Native** di bawah.
 
+**Tanpa build (image siap-pakai dari GHCR)** — multi-arch (amd64 + arm64), dipublikasikan via GitHub Actions:
+```bash
+docker compose pull && docker compose up -d   # tarik ghcr.io/suryaex/secureops-{backend,web}:latest
+```
+> Pertama kali, pastikan package GHCR di-set **public** (atau `docker login ghcr.io`).
+
 ## B. Controller — Native (systemd + nginx, login PAM)
 
 Satu perintah, lintas distro (Ubuntu/Debian/Mint/Pop!/Fedora/RHEL/Rocky/Alma/openSUSE/Arch)
@@ -107,6 +113,10 @@ iwr "https://secureops.site/api/servers/install-script/<token>?os=windows" -UseB
 ```bash
 sudo bash agent-macos/deploy/install.sh
 ```
+
+> **Agent Windows & macOS hanya tersedia native** (installer di repo). Tidak ada
+> versi Docker: Windows butuh akses host + ConPTY, dan macOS tidak bisa di-container-kan.
+> Agent **Docker** hanya untuk Linux (`ghcr.io/suryaex/secureops-agent`).
 
 ## D. Domain & HTTPS (Cloudflare Tunnel)
 

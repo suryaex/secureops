@@ -11,7 +11,7 @@
 services:
   backend:
     build: { context: ./controller/backend }
-    image: secureops-backend
+    image: ghcr.io/suryaex/secureops-backend:latest
     container_name: secureops-backend
     restart: unless-stopped
     environment:
@@ -32,7 +32,7 @@ services:
 
   web:
     build: { context: ./controller/frontend }
-    image: secureops-web
+    image: ghcr.io/suryaex/secureops-web:latest
     container_name: secureops-web
     restart: unless-stopped
     depends_on: [backend]

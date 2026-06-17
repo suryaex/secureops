@@ -12,7 +12,7 @@
 services:
   agent:
     build: { context: ./backend }
-    image: secureops-agent
+    image: ghcr.io/suryaex/secureops-agent:latest
     container_name: secureops-agent
     restart: unless-stopped
     network_mode: host          # serve on host :8001 + see host network
