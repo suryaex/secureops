@@ -1,0 +1,49 @@
+# SecureOps Controller — lightweight Docker stack
+#   cp .env.example .env   # set SECUREOPS_JWT_SECRET + SECUREOPS_ADMIN_PASSWORD
+#   docker compose up -d --build
+#
+# Two small images sharing the python:3.12-slim / nginx:alpine bases:
+#   • backend — FastAPI + gunicorn (internal :8000), SQLite on a named volume
+#   • web     — nginx serving the SPA + proxying /api (incl. WebSocket terminal)
+#
+# NOTE: Linux PAM login needs host accounts, which a container does not see —
+# in Docker, sign in with the DB admin (SECUREOPS_ADMIN_PASSWORD / email login).
+services:
+  backend:
+    build: { context: ./controller/backend }
+    image: secureops-backend
+    container_name: secureops-backend
+    restart: unless-stopped
+    environment:
+      SECUREOPS_BEHIND_PROXY: "1"
+      SECUREOPS_JWT_SECRET: ${SECUREOPS_JWT_SECRET:-}
+      SECUREOPS_ADMIN_PASSWORD: ${SECUREOPS_ADMIN_PASSWORD:-}
+      SECUREOPS_CORS_ORIGINS: ${SECUREOPS_CORS_ORIGINS:-*}
+      SECUREOPS_ENABLE_HSTS: ${SECUREOPS_ENABLE_HSTS:-0}
+      # LogSync → StorageHub (optional)
+      SECUREOPS_STORAGEHUB_URL: ${SECUREOPS_STORAGEHUB_URL:-}
+      SECUREOPS_STORAGEHUB_API_KEY: ${SECUREOPS_STORAGEHUB_API_KEY:-}
+      SECUREOPS_LOGSYNC_INTERVAL_MIN: ${SECUREOPS_LOGSYNC_INTERVAL_MIN:-15}
+    volumes:
+      - secureops_data:/app/data
+    expose:
+      - "8000"
+    networks: [secureops]
+
+  web:
+    build: { context: ./controller/frontend }
+    image: secureops-web
+    container_name: secureops-web
+    restart: unless-stopped
+    depends_on: [backend]
+    ports:
+      # SecureOps owns :80 by default (StorageHub uses :8080). Override if needed.
+      - "${SECUREOPS_HTTP_PORT:-80}:80"
+    networks: [secureops]
+
+volumes:
+  secureops_data:
+
+networks:
+  secureops:
+    driver: bridge

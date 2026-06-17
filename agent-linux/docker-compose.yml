@@ -1,0 +1,35 @@
+# SecureOps Agent (Linux) — Docker
+#   SECUREOPS_AGENT_KEY=<shared-secret> docker compose up -d --build
+#
+# Uses host PID + host network so the agent sees the REAL host processes,
+# CPU/memory and listening ports (via /proc & psutil), and so the Controller
+# can reach it on the host's :8001. Host filesystem is mounted read-only at
+# /host for reference.
+#
+# NOTE: file-integrity / sudoers auditing that reads /etc is most complete with
+# the native install (deploy/install.sh). The container reads its own /etc unless
+# you bind-mount the specific host files you want audited.
+services:
+  agent:
+    build: { context: ./backend }
+    image: secureops-agent
+    container_name: secureops-agent
+    restart: unless-stopped
+    network_mode: host          # serve on host :8001 + see host network
+    pid: host                   # real host process visibility for psutil
+    environment:
+      SECUREOPS_AGENT_MODE: "1"
+      SECUREOPS_AGENT_KEY: ${SECUREOPS_AGENT_KEY:?set a shared secret}
+      SECUREOPS_BIND: 0.0.0.0:${AGENT_PORT:-8001}
+      SECUREOPS_RECORD_SESSIONS: ${SECUREOPS_RECORD_SESSIONS:-0}
+      SECUREOPS_HOST_ROOT: /host
+    volumes:
+      - agent_data:/app/data
+      - /:/host:ro              # read-only host fs for reference/auditing
+    cap_add:
+      - SYS_PTRACE              # inspect host processes
+    security_opt:
+      - apparmor:unconfined
+
+volumes:
+  agent_data:

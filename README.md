@@ -1,158 +1,219 @@
 # SecureOps — Platform Monitoring Keamanan Multi-Server
 
-**Politeknik Negeri Sriwijaya**
+**Politeknik Negeri Sriwijaya · Jurusan Teknik Elektro · Prodi D4 Teknik Telekomunikasi**
+Pengembang: **Muhammad Surya Ragasin**
 
-> Pantau **banyak server Linux** dari **satu dashboard glassmorphism modern**. Login pakai akun OS asli via PAM. Akses lewat browser, install sebagai PWA di Android & iOS, atau bangun jadi APK/IPA native pakai Capacitor.
+> Pantau **banyak server** (Linux/Windows/macOS) dari **satu dashboard glassmorphism**.
+> Login pakai akun OS asli via **PAM**, akses lewat browser, install sebagai **PWA**,
+> atau bangun **APK/IPA** native dengan Capacitor. Jalan **native** atau **Docker**,
+> di **x86-64 maupun ARM** (Raspberry Pi / Orange Pi).
 
 ```
                      🌍 https://secureops.site
-                                │
+                                │  (Cloudflare Tunnel → nginx, HTTPS)
                           ┌─────▼──────┐
-                          │ Controller │ ← Web UI + central API
+                          │ Controller │  FastAPI + React + SQLite · Auth: PAM → JWT
                           └─────┬──────┘
-              ┌─────────────────┼─────────────────┐
-              │                 │                 │
-          ┌───▼────┐        ┌───▼────┐        ┌───▼────┐
-          │ Agent  │        │ Agent  │        │ Agent  │
-          └────────┘        └────────┘        └────────┘
-          web-prod          db-server         backup-srv
+            Tailscale/WireGuard │  (X-Agent-Key)            ┌── LogSync ──┐
+        ┌───────────┬───────────┼───────────┐               │ ARM / MCU   │→ HTTP
+    ┌───▼───┐   ┌───▼───┐   ┌───▼───┐                       │ Router/SW/FW│→ syslog
+    │ Agent │   │ Agent │   │ Agent │  (Linux/Win/macOS)    └──────┬──────┘
+    └───────┘   └───────┘   └───────┘                              ▼ backup → StorageHub
 ```
 
-## 📂 Struktur Repository
+> **Lisensi:** penggunaan **khusus internal Politeknik Negeri Sriwijaya** — lihat [LICENSE](LICENSE).
 
-| Folder | Kegunaan | Install di |
-|--------|----------|------------|
-| `controller/` | Backend lengkap + UI React glass + konfigurasi nginx | **1 server pusat** (Linux only) |
-| `agent-linux/` | Agent untuk **semua distro Linux** (apt/dnf/yum/zypper/pacman/apk) — x86-64 & ARM | Server/desktop Linux |
-| `agent-windows/` | Agent untuk Windows 10/11 & Server 2019+ | Workstation/server Windows |
-| `agent-macos/` | Agent untuk macOS 12+ | Mac mini, MacBook |
+---
 
-## ⚡ Mulai Cepat
+## 📂 Struktur
 
-**👉 Baca [PANDUAN-INSTALASI.md](PANDUAN-INSTALASI.md) — panduan lengkap step-by-step.**
+| Folder | Kegunaan |
+|--------|----------|
+| `controller/` | Backend FastAPI + UI React + nginx + Docker (server pusat) |
+| `agent-linux/` | Agent semua distro Linux (apt/dnf/yum/zypper/pacman/apk) + Docker — x86-64 & ARM |
+| `agent-windows/` | Agent Windows 10/11 & Server 2019+ |
+| `agent-macos/` | Agent macOS 12+ (Intel & Apple Silicon) |
 
-Untuk yang udah familiar:
+## ✨ Fitur
+- 🔐 **Login Linux PAM** (anggota `sudo`/`wheel` → admin; lainnya auditor read-only) + login email/DB.
+- 🌐 **Satu domain, banyak server** — Controller proxy ke tiap agent lewat mesh Tailscale.
+- 🎨 **UI Luminous Security** (glassmorphism, Apple-blue), 📱 **PWA** + Capacitor.
+- 📊 Modul: Dashboard · Permission Audit · Sudo Monitor · File Integrity · Activity Logs · System Health.
+- 🖥️ **Terminal SSH live** (PTY via WebSocket) + 🎬 **recording** (asciinema) & playback.
+- ⚡ **Auto-register agent** (one-liner, mirip Tailscale auth-key).
+- 🔌 **LogSync** — kumpulkan log ARM/mikrokontroler (HTTP) & appliance jaringan (syslog) → backup ke **StorageHub**.
+- 🛡️ Hardening: JWT secret non-default, security headers, rate-limit, ingest ber-kunci.
+
+---
+
+# 🚀 Instalasi
+
+Ada **dua cara**: **Docker** (paling ringkas, semua dependensi di dalam image) atau
+**Native** (systemd + nginx, mendukung login PAM penuh). Pilih salah satu.
+
+## A. Controller — Docker (lightweight) ⭐
+
+Dua image kecil berbagi base `python:3.12-slim` & `nginx:alpine`.
 
 ```bash
-# 1. Di controller server (1 unit aja):
+git clone https://github.com/suryaex/secureops.git
+cd secureops
+cp .env.example .env          # WAJIB isi SECUREOPS_JWT_SECRET + SECUREOPS_ADMIN_PASSWORD
+#   openssl rand -base64 48   →  SECUREOPS_JWT_SECRET
+docker compose up -d --build
+```
+
+Buka `http://<ip-server>/` (port di `SECUREOPS_HTTP_PORT`, default 80). Karena
+container tidak melihat akun host, **login pakai admin DB** (`SECUREOPS_ADMIN_PASSWORD`
+atau email). Untuk login PAM dengan akun OS asli, pakai cara **Native** di bawah.
+
+## B. Controller — Native (systemd + nginx, login PAM)
+
+Satu perintah, lintas distro (Ubuntu/Debian/Mint/Pop!/Fedora/RHEL/Rocky/Alma/openSUSE/Arch)
+dan ARM (Pi/Orange Pi):
+
+```bash
 git clone https://github.com/suryaex/secureops.git
 cd secureops
 sudo SERVER_NAME=secureops.site bash controller/deploy/deploy-prod.sh
-sudo certbot --nginx -d secureops.site   # atau pakai Cloudflare Tunnel
-
-# 2. Di setiap server agent — tinggal 1 langkah!
-#    Buka Controller UI → Servers → + Add Server → copy command yang muncul
-#    → paste di terminal agent → SELESAI (agent auto-register sendiri)
+# HTTPS:
+sudo certbot --nginx -d secureops.site      # atau pakai Cloudflare Tunnel (lihat bawah)
 ```
 
-## ✨ Fitur Utama
+## C. Tambah Agent (zero-touch)
 
-- 🔐 **Login Linux PAM** — sign in pakai akun OS, gak ada database password terpisah
-- 🌐 **Satu domain, banyak server** — Controller proxy ke setiap agent lewat Tailscale
-- 🎨 **Design Luminous Security** — glassmorphism, aksen Apple Blue, tipografi Inter
-- 📱 **Siap mobile** — PWA out-of-the-box; Capacitor untuk Play Store / App Store
-- 📊 **9 modul monitoring** — Dashboard, Fleet, Audit, Sudo, Integrity, Logs, Health, Network, Alerts
-- 🖥️ **Terminal SSH live** — PTY via WebSocket ke setiap agent, full audit log
-- 🎬 **Recording sesi** — auto rekam terminal sesi ke `asciinema .cast`, playback in-browser
-- 🛡️ **Role-based** — anggota `sudo`/`wheel` jadi admin; lainnya jadi auditor (read-only)
-- 📄 **Report otomatis** — export laporan HTML/PDF satu klik dari Dashboard
-- ⚡ **Auto-register agent** — tambah server cuma 1 command (mirip Tailscale auth-key)
-- 🔌 **LogSync** — kumpulkan log ARM/mikrokontroler & appliance jaringan (router/switch/firewall via syslog), backup otomatis ke **StorageHub**
+**Cara termudah:** UI → **Servers → + Add Server** → salin one-liner yang muncul →
+tempel di server target → agent meng-install & auto-register sendiri.
 
-## 🧱 Tech Stack
+**Agent Linux — Native:** one-liner di atas, atau manual:
+```bash
+sudo bash agent-linux/deploy/install.sh
+```
 
-| Layer | Stack |
-|-------|-------|
-| Frontend | React 18 · Vite · Tailwind · Recharts · PWA |
-| Mobile | Capacitor (Android + iOS) |
-| Backend | FastAPI · SQLAlchemy · gunicorn + uvicorn |
-| Auth | Linux PAM + JWT |
-| Database | SQLite (berbasis file) |
-| Mesh VPN | Tailscale (controller ↔ agents) |
-| Arsitektur | x86-64 **dan** ARM (arm64 / armv7 — Raspberry Pi, Orange Pi) |
-| Lintas distro | apt · dnf/yum · zypper · pacman · apk (systemd & OpenRC) |
-| Web server | nginx |
-| Services | systemd |
+**Agent Linux — Docker** (PID & network host agar lihat proses/port host asli):
+```bash
+cd agent-linux
+SECUREOPS_AGENT_KEY=<shared-secret> docker compose up -d --build
+```
+> Audit file-integrity/sudoers paling lengkap dengan install **native**; versi Docker
+> melihat `/proc` host (proses, CPU, port) dan host fs read-only di `/host`.
 
-## 📚 Dokumentasi
-
-- **[PANDUAN-INSTALASI.md](PANDUAN-INSTALASI.md)** — panduan instalasi lengkap (Bahasa Indonesia)
-- [INSTALL.md](INSTALL.md) — versi English
-- [controller/README.md](controller/README.md) — fitur controller & dev guide
-- [controller/deploy/MOBILE.md](controller/deploy/MOBILE.md) — bangun APK Android / IPA iOS
-- [controller/deploy/MULTI-SERVER.md](controller/deploy/MULTI-SERVER.md) — arsitektur multi-server deep-dive
-- [agent-linux/README.md](agent-linux/README.md) — setup agent & daftar endpoint
-- [EXTENSIONS.md](EXTENSIONS.md) — **LogSync**: ingest log ARM/mikrokontroler + syslog appliance → backup ke StorageHub
-- [SECURITY.md](SECURITY.md) — postur keamanan & konfigurasi hardening
-- `uninstall.sh` — copot bersih (controller/agent) sebelum major update (`--purge` hapus data)
-- [INTEROP.md](INTEROP.md) — jalan berdampingan dengan **StorageHub** (peta port: SecureOps `:80`/`:8000`, StorageHub `:8080`/`:8010`) + dukungan ARM
-
-## 🌐 OS yang Didukung untuk Agent
-
-Installer otomatis deteksi OS. Tinggal pilih dari dropdown saat **+ Add Server**:
-
-### 🐧 Linux (semua distro — x86-64 & ARM)
-
-| Distro | Versi | Status |
-|--------|-------|:------:|
-| Ubuntu Server/Desktop | 20.04 / 22.04 / **24.04** / 25.04 / 25.10 | ✅ |
-| Debian | 11 / 12 / 13 | ✅ |
-| Linux Mint | 20+ / 21+ / 22+ | ✅ |
-| Pop!_OS | 22.04+ | ✅ |
-| Elementary OS | 7+ | ✅ |
-| Kali Linux | 2024.x+ | ✅ |
-| Fedora / RHEL / Rocky / Alma | 39+ / 9+ | ✅ |
-| openSUSE / SLES | Leap 15+ / Tumbleweed | ✅ |
-| Arch / Manjaro / EndeavourOS | rolling | ✅ |
-| Alpine Linux | 3.18+ (OpenRC) | ✅ |
-| Raspberry Pi OS / Orange Pi / Armbian | arm64 **&** armv7 | ✅ |
-
-> Installer mendeteksi package manager (apt/dnf/yum/zypper/pacman/apk) **dan** arsitektur
-> CPU otomatis. Di ARM 32-bit (armv7) toolchain Rust dipasang otomatis agar dependensi
-> native ter-compile.
-
-### 🪟 Windows
-
-| Versi | Status | Catatan |
-|-------|:------:|---------|
-| Windows 10 (1809+) | ✅ | Untuk terminal ConPTY |
-| Windows 11 | ✅ | Recommended |
-| Windows Server 2019 | ✅ | |
-| Windows Server 2022 | ✅ | Recommended untuk server |
-
-Install via PowerShell (Run as Administrator):
+**Agent Windows** (PowerShell sebagai Administrator):
 ```powershell
 iwr "https://secureops.site/api/servers/install-script/<token>?os=windows" -UseBasicParsing | iex
 ```
 
-### 🍎 macOS
+**Agent macOS:**
+```bash
+sudo bash agent-macos/deploy/install.sh
+```
 
-| Versi | Status |
-|-------|:------:|
-| macOS 12 (Monterey) | ✅ |
-| macOS 13 (Ventura) | ✅ |
-| macOS 14 (Sonoma) | ✅ |
-| macOS 15 (Sequoia) | ✅ |
+## D. Domain & HTTPS (Cloudflare Tunnel)
 
-Untuk Apple Silicon (M1/M2/M3) maupun Intel.
+Tanpa IP publik pun bisa. Ringkas:
+```bash
+cloudflared tunnel login
+cloudflared tunnel create secureops
+# isi /etc/cloudflared/config.yml (UUID + service http://localhost:80), lalu:
+cloudflared tunnel route dns secureops secureops.site
+sudo cloudflared service install && sudo systemctl enable --now cloudflared
+```
+Set CORS controller bila perlu: `SECUREOPS_CORS_ORIGINS=https://secureops.site,capacitor://localhost`.
 
-## 🚀 Status Project
+## E. Akses publik / VPN (Tailscale)
 
-| Versi | Tanggal | Catatan |
-|-------|---------|---------|
-| **v1.7** | Juni 2026 | LogSync (backup log ARM/MCU/appliance ke StorageHub), security hardening (JWT, headers), uninstall scripts |
-| v1.6 | Juni 2026 | Lintas semua distro Linux + ARM (Pi/Orange Pi), coexist dengan StorageHub, fix nginx Fedora |
-| v1.5 | Mei 2026 | Auto-register agent (one-liner), terminal recording, dukungan Ubuntu 24+ |
-| v1.4 | Mei 2026 | SSH terminal realtime, virtual keys mobile |
-| v1.3 | Mei 2026 | Multi-server arsitektur, Luminous Security UI |
-| v1.2 | Mei 2026 | PWA, Capacitor, deploy production |
-| v1.1 | April 2026 | Linux PAM auth |
-| v1.0 | April 2026 | Modul dasar (audit, sudo, FIM, logs) |
+Controller di-front nginx (`server_name _`) → reachable di alamat apa pun (LAN, IP publik, VPN).
+Untuk lintas-jaringan, pasang Tailscale lalu install agent via IP Tailscale:
+```bash
+curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up
+```
+Installer agent otomatis memilih IP Tailscale + probing multi-kandidat (LAN/VPN).
 
-## 📄 Lisensi
+## F. Mobile (PWA / APK / IPA)
 
-Untuk penggunaan internal Politeknik Negeri Sriwijaya. Hubungi tim IT untuk redistribusi.
+- **PWA:** buka situs di Android/iOS → *Add to Home Screen*.
+- **Native:** `cd controller/frontend && npx cap add android && npx cap sync && npx cap open android`.
 
 ---
 
-**Dikembangkan oleh:** Muhammad Surya Ragasin · **Jurusan Teknik Elektro · Prodi D4 Teknik Telekomunikasi**
+# 🔌 Ekstensi LogSync (opsional)
+
+Backup log perangkat kecil & appliance ke **StorageHub**. Semua **mati default**, aktifkan via env controller lalu restart:
+
+```bash
+SECUREOPS_STORAGEHUB_URL=http://<storagehub>:8080
+SECUREOPS_STORAGEHUB_API_KEY=<SERVICE_API_KEYS milik StorageHub>
+SECUREOPS_LOGSYNC_INTERVAL_MIN=15      # 0 = matikan scheduler
+SECUREOPS_SYSLOG_ENABLED=1             # collector router/switch/firewall
+SECUREOPS_SYSLOG_PORT=5514
+```
+
+- **Mikrokontroler/ARM (HTTP):** daftar device → `POST /api/logsync/devices` (admin) → dapat `device_key`. Kirim log:
+  ```bash
+  curl -X POST https://secureops.site/api/logsync/ingest \
+    -H "X-Device-Id: sensor-01" -H "X-Device-Key: <key>" \
+    -H "Content-Type: application/json" -d '{"message":"suhu=41C","severity":"warning"}'
+  ```
+- **Router/switch/firewall (syslog):** arahkan ke `udp://<controller>:5514`
+  (Cisco `logging host <ip> transport udp port 5514`; MikroTik/pfSense/OpenWRT serupa).
+
+Endpoint admin (JWT): `GET /api/logsync/status` · `POST /api/logsync/backup/run` ·
+`GET|POST /api/logsync/devices` · `GET /api/logsync/logs`.
+
+---
+
+# 🔒 Keamanan
+
+SecureOps sudah aman secara default; untuk produksi set:
+```bash
+SECUREOPS_JWT_SECRET=$(openssl rand -base64 48)   # tanpa ini, di-generate & disimpan (chmod 600)
+SECUREOPS_ADMIN_PASSWORD=<password-kuat>          # tanpa ini, random dicetak SEKALI ke log
+SECUREOPS_BEHIND_PROXY=1                           # percaya X-Forwarded-* dari nginx
+SECUREOPS_ENABLE_HSTS=1                            # hanya saat HTTPS penuh
+SECUREOPS_CORS_ORIGINS=https://secureops.site,capacitor://localhost
+```
+- JWT secret **tidak pernah** hardcoded; security headers (`nosniff`, `DENY`, Referrer/Permissions-Policy) di tiap response.
+- Auth agent shared-key (`X-Agent-Key`, URL-encoded); join token sekali-pakai di DB.
+- LogSync ingest: kunci per-device (compare konstan-waktu), rate-limit, batas ukuran.
+- Terminasi TLS di nginx/Cloudflare; jangan expose port backend/agent ke internet (pakai mesh).
+
+---
+
+# 🧹 Uninstall (sebelum major update / ganti versi)
+
+```bash
+# Controller / agent Linux (auto-deteksi):
+sudo bash uninstall.sh            # hapus service & file, DATABASE DISIMPAN
+sudo bash uninstall.sh --purge    # sekalian hapus DB, config, log, user
+
+# Docker:
+docker compose down               # controller   (tambah -v untuk hapus volume)
+cd agent-linux && docker compose down
+
+# Windows (PowerShell admin):
+powershell -ExecutionPolicy Bypass -File agent-windows\deploy\uninstall.ps1   # -Purge utk hapus data
+# macOS:
+sudo bash agent-macos/deploy/uninstall.sh                                     # --purge
+```
+
+---
+
+# 🤝 Coexist dengan StorageHub
+
+SecureOps memakai port **`:80`/`:443`** + backend **`:8000`**; **StorageHub** memakai
+**`:8080`** + **`:8010`**, sehingga keduanya bisa jalan **di host yang sama** tanpa bentrok
+dan berbagi base image Docker (`python:3.12-slim`). LogSync mem-backup log SecureOps ke StorageHub.
+
+---
+
+# 🖥️ OS yang Didukung
+
+**Linux (agent & controller):** Ubuntu/Debian/Mint/Pop!/Elementary/Kali · Fedora/RHEL/Rocky/Alma ·
+openSUSE/SLES · Arch/Manjaro · Alpine (OpenRC) — **x86-64 & ARM (arm64/armv7)**.
+**Windows:** 10 (1809+)/11 · Server 2019/2022. **macOS:** 12–15 (Intel & Apple Silicon).
+
+---
+
+## 📄 Lisensi
+Penggunaan **khusus internal Politeknik Negeri Sriwijaya**. Lihat [LICENSE](LICENSE).
+Untuk redistribusi/penggunaan di luar Polsri, hubungi pengembang via Jurusan Teknik Elektro.

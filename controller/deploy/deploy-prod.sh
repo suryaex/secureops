@@ -290,5 +290,5 @@ else
 fi
 echo
 echo "  Logs:      sudo journalctl -u secureops-backend -f"
-echo "  Mobile:    see controller/deploy/MOBILE.md"
+echo "  Docs:      see README.md (instalasi, Docker, LogSync, keamanan)"
 echo -e "${GREEN}=====================================================${NC}"
