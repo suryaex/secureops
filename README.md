@@ -53,25 +53,27 @@ Ada **dua cara**: **Docker** (paling ringkas, semua dependensi di dalam image) a
 
 ## A. Controller — Docker (lightweight) ⭐
 
-Dua image kecil berbagi base `python:3.12-slim` & `nginx:alpine`.
+Tiga image kecil (**backend + frontend + nginx**) berbagi base `python:3.12-slim`
+& `nginx:alpine` — setup sama seperti StorageHub. **Satu perintah** (auto-pasang
+Docker, generate `.env` + secret, deteksi LAN/Tailscale, build, tunggu health):
 
 ```bash
 git clone https://github.com/suryaex/secureops.git
 cd secureops
-cp .env.example .env          # WAJIB isi SECUREOPS_JWT_SECRET + SECUREOPS_ADMIN_PASSWORD
-#   openssl rand -base64 48   →  SECUREOPS_JWT_SECRET
-docker compose up -d --build
+./install.sh            # atau:  make install
+#  opsi: --prod (restart=always + log rotation) · --tailscale · --public · --down · --reset
 ```
 
-Buka `http://<ip-server>/` (port di `SECUREOPS_HTTP_PORT`, default 80). Karena
-container tidak melihat akun host, **login pakai admin DB** (`SECUREOPS_ADMIN_PASSWORD`
-atau email). Untuk login PAM dengan akun OS asli, pakai cara **Native** di bawah.
+Installer mencetak URL + password admin (login user `admin`). Karena container tidak
+melihat akun host, **login pakai admin DB**; untuk login **PAM** akun OS asli pakai
+cara **Native** di bawah.
 
-**Tanpa build (image siap-pakai dari GHCR)** — multi-arch (amd64 + arm64), dipublikasikan via GitHub Actions:
+**Manual:** `cp .env.example .env` (isi `SECUREOPS_JWT_SECRET`/`SECUREOPS_ADMIN_PASSWORD`) → `docker compose up -d --build`.
+**Image siap-pakai (GHCR, multi-arch amd64+arm64):**
 ```bash
-docker compose pull && docker compose up -d   # tarik ghcr.io/suryaex/secureops-{backend,web}:latest
+docker compose pull && docker compose up -d   # ghcr.io/suryaex/secureops-{backend,web}:latest
 ```
-> Pertama kali, pastikan package GHCR di-set **public** (atau `docker login ghcr.io`).
+> Pertama kali, set package GHCR ke **public** (atau `docker login ghcr.io`).
 
 ## B. Controller — Native (systemd + nginx, login PAM)
 

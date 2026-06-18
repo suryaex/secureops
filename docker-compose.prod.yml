@@ -1,0 +1,23 @@
+# Production overlay — apply on top of docker-compose.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#   (or simply:  ./install.sh --prod)
+#
+# Hardens the stack for always-on hosts: auto-restart + log rotation.
+services:
+  backend:
+    restart: always
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
+
+  frontend:
+    restart: always
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  nginx:
+    restart: always
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "5" }
