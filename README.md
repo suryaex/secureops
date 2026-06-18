@@ -34,6 +34,8 @@ Pengembang: **Muhammad Surya Ragasin**
 | `agent-windows/` | Agent Windows 10/11 & Server 2019+ |
 | `agent-macos/` | Agent macOS 12+ (Intel & Apple Silicon) |
 
+> Berkas Docker di root: `install.sh` (one-shot) · `Makefile` · `docker-compose.yml` + `docker-compose.prod.yml` · `.env.example` · `uninstall.sh`.
+
 ## ✨ Fitur
 - 🔐 **Login Linux PAM** (anggota `sudo`/`wheel` → admin; lainnya auditor read-only) + login email/DB.
 - 🌐 **Satu domain, banyak server** — Controller proxy ke tiap agent lewat mesh Tailscale.
@@ -199,7 +201,7 @@ sudo bash uninstall.sh            # hapus service & file, DATABASE DISIMPAN
 sudo bash uninstall.sh --purge    # sekalian hapus DB, config, log, user
 
 # Docker:
-docker compose down               # controller   (tambah -v untuk hapus volume)
+./install.sh --down               # controller stop  (--reset hapus volume; atau: make down)
 cd agent-linux && docker compose down
 
 # Windows (PowerShell admin):
