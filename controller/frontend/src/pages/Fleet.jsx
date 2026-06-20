@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useServers } from '../context/ServerContext'
+import { useI18n } from '../i18n'
 import api from '../api/client'
 
 const bar = (p) => `${Math.min(100, Math.max(0, p || 0))}%`
@@ -8,6 +9,7 @@ const barColor = (p) => p >= 85 ? 'bg-danger' : p >= 65 ? 'bg-warning' : 'bg-suc
 
 export default function Fleet() {
   const navigate = useNavigate()
+  const { t } = useI18n()
   const { select } = useServers() || {}
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -35,14 +37,14 @@ export default function Fleet() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Fleet Overview</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('fleet.title')}</h1>
           <p className="text-gray-500 text-sm mt-0.5">
-            {data.online}/{data.total} servers online · auto-refresh every 10s
+            {t('fleet.serversOnline', { online: data.online, total: data.total })}
           </p>
         </div>
         <button onClick={load} className="btn-secondary shrink-0">
           <span className="material-symbols-outlined text-lg">refresh</span>
-          <span className="hidden sm:inline">Refresh</span>
+          <span className="hidden sm:inline">{t('common.refresh')}</span>
         </button>
       </div>
 
@@ -66,22 +68,22 @@ export default function Fleet() {
               <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
                 s.ok ? 'bg-success-light text-success' : 'bg-danger-light text-danger'
               }`}>
-                {s.ok ? 'ONLINE' : 'OFFLINE'}
+                {s.ok ? t('fleet.online') : t('fleet.offline')}
               </span>
             </div>
 
             {s.ok ? (
               <div className="space-y-2.5 mt-3">
-                <Metric label="CPU"    pct={s.cpu} />
-                <Metric label="Memory" pct={s.memory} />
-                <Metric label="Disk"   pct={s.disk} />
+                <Metric label={t('fleet.cpu')}    pct={s.cpu} />
+                <Metric label={t('fleet.memory')} pct={s.memory} />
+                <Metric label={t('fleet.disk')}   pct={s.disk} />
               </div>
             ) : (
-              <p className="text-xs text-danger mt-3 truncate">{s.error || 'Unreachable'}</p>
+              <p className="text-xs text-danger mt-3 truncate">{s.error || t('fleet.unreachable')}</p>
             )}
 
             <div className="mt-4 pt-3 border-t border-gray-100 text-xs text-primary font-medium flex items-center gap-1">
-              View details
+              {t('fleet.viewDetails')}
               <span className="material-symbols-outlined text-base">arrow_forward</span>
             </div>
           </div>

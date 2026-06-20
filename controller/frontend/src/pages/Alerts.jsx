@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../api/client'
+import { useI18n } from '../i18n'
 
 const SEV_BADGE = {
   Critical: 'bg-red-50 text-red-700 border-red-200',
@@ -35,6 +36,7 @@ const timeAgo = (ts) => {
 }
 
 export default function Alerts() {
+  const { t } = useI18n()
   const [data, setData] = useState(null)
   const [filter, setFilter] = useState('All')
   const [loading, setLoading] = useState(true)
@@ -59,12 +61,12 @@ export default function Alerts() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Security Alerts</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Aggregated alerts from all monitoring modules</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('alerts.title')}</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{t('alerts.subtitle')}</p>
         </div>
         <button onClick={load} className="btn-secondary shrink-0">
           <span className="material-symbols-outlined text-lg">refresh</span>
-          <span className="hidden sm:inline">Refresh</span>
+          <span className="hidden sm:inline">{t('common.refresh')}</span>
         </button>
       </div>
 
@@ -75,7 +77,7 @@ export default function Alerts() {
             sev === 'High' ? 'border-warning' :
             sev === 'Medium' ? 'border-yellow-400' : 'border-blue-400'
           }`}>
-            <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider">{sev}</p>
+            <p className="text-gray-400 text-xs font-semibold uppercase tracking-wider">{t(`sev.${sev.toLowerCase()}`)}</p>
             <p className={`text-3xl font-bold mt-2 ${
               sev === 'Critical' ? 'text-danger' :
               sev === 'High' ? 'text-warning' :
@@ -90,20 +92,20 @@ export default function Alerts() {
           <button key={s} onClick={() => setFilter(s)} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
             filter === s ? 'bg-primary text-white shadow-sm' : 'bg-white text-gray-500 border border-gray-200 hover:border-primary hover:text-primary'
           }`}>
-            {s}{s !== 'All' && ` (${data.by_severity[s] || 0})`}
+            {s === 'All' ? t('common.all') : t(`sev.${s.toLowerCase()}`)}{s !== 'All' && ` (${data.by_severity[s] || 0})`}
           </button>
         ))}
       </div>
 
       <div className="card overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-50">
-          <h3 className="text-gray-800 font-semibold">Active Alerts ({filtered.length})</h3>
+          <h3 className="text-gray-800 font-semibold">{t('alerts.active', { n: filtered.length })}</h3>
         </div>
         {filtered.length === 0 ? (
           <div className="p-12 text-center">
             <span className="material-symbols-outlined text-6xl text-success" style={{fontVariationSettings:"'FILL' 1"}}>verified</span>
-            <p className="text-gray-700 font-semibold mt-3">All Clear</p>
-            <p className="text-gray-400 text-sm">No {filter !== 'All' ? filter.toLowerCase() : ''} alerts at this time</p>
+            <p className="text-gray-700 font-semibold mt-3">{t('alerts.allClear')}</p>
+            <p className="text-gray-400 text-sm">{t('alerts.noAlerts', { sev: filter !== 'All' ? t(`sev.${filter.toLowerCase()}`) : '' })}</p>
           </div>
         ) : (
           <div className="divide-y divide-gray-50">
@@ -118,7 +120,7 @@ export default function Alerts() {
                   <div className="flex items-center gap-2 mb-0.5">
                     <p className="text-gray-900 font-semibold text-sm truncate">{a.title}</p>
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${SEV_BADGE[a.severity]}`}>
-                      {a.severity.toUpperCase()}
+                      {t(`sev.${String(a.severity).toLowerCase()}`)}
                     </span>
                   </div>
                   <p className="text-gray-500 text-xs truncate">{a.details}</p>
@@ -127,7 +129,7 @@ export default function Alerts() {
                     <span className="text-gray-300">·</span>
                     <span className="text-gray-400 text-[11px]">{timeAgo(a.timestamp)}</span>
                     <span className="text-gray-300">·</span>
-                    <span className="text-gray-400 text-[11px]">source: {a.source}</span>
+                    <span className="text-gray-400 text-[11px]">{t('alerts.source', { s: a.source })}</span>
                   </div>
                 </div>
                 <span className="material-symbols-outlined text-gray-300 text-base shrink-0 mt-2">chevron_right</span>

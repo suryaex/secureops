@@ -11,7 +11,7 @@ export const DEFAULT_LANG = 'en'
 
 export const translations = {
   en: {
-    common: { loading: 'Loading…', generating: 'Generating…', save: 'Save', saved: 'Saved', cancel: 'Cancel', search: 'Search', all: 'All', today: 'Today', days7: '7 Days', next: 'Next', prev: 'Previous', active: 'active', success: 'Success', failed: 'Failed', applyReload: 'Apply & Reload' },
+    common: { loading: 'Loading…', generating: 'Generating…', save: 'Save', saved: 'Saved', cancel: 'Cancel', search: 'Search', all: 'All', today: 'Today', days7: '7 Days', next: 'Next', prev: 'Previous', active: 'active', success: 'Success', failed: 'Failed', applyReload: 'Apply & Reload', refresh: 'Refresh', status: 'Status' },
     sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' },
     nav: { dashboard: 'Dashboard', fleet: 'Fleet', audit: 'Audit', sudo: 'Sudo', integrity: 'Integrity', logs: 'Logs', terminal: 'Terminal', replays: 'Replays', servers: 'Servers', users: 'Users', settings: 'Settings', support: 'Support' },
     top: { systemHealth: 'System Health', network: 'Network', alerts: 'Alerts', searchPlaceholder: 'Search logs, users, or alerts…', searching: 'Searching…', noResults: 'No results for "{q}"', serversCount: 'Servers ({n})', manage: 'Manage', fleetOverview: 'Fleet Overview', noServer: 'No server', group: { logs: 'Activity Logs', users: 'Sudo Users', files: 'Files', permissions: 'Permissions' } },
@@ -19,10 +19,31 @@ export const translations = {
     dash: { title: 'System Overview', lastUpdated: 'Last updated: Just now', report: 'View Report', totalSudoFiles: 'Total Sudo Files', criticalN: 'Critical: {n}', sudoUsers: 'Sudo Users', integrityStatus: 'Integrity Status', newAlerts: 'New Alerts', actionNeeded: 'action needed', allClear: 'all clear', severityDist: 'Severity Level Distribution', totalIssues: 'Total Issues', noScanData: 'No scan data — run a scan first', scanActivity: 'System Scan Activity (24 Hours)', scans: 'Scans', recentActivity: 'Recent Activity', viewAllLogs: 'View All Logs', noActivity: 'No activity yet — login and run scans to populate', colAdmin: 'Admin', colAction: 'Action', colTime: 'Time', colIp: 'IP Address', reportFail: 'Failed to create report: {msg}' },
     login: { subtitle: 'Security Audit Dashboard', usernamePlaceholder: 'superadmin or email@domain', passwordPlaceholder: 'Your OS account password', signIn: 'Sign In', usernameLabel: 'Username / Email', passwordLabel: 'Linux Password', passwdHint: 'Use `passwd` on server', invalid: 'Invalid username or password.', pamFooter: 'Authenticated via Linux PAM', osHint: 'Sign in with your real OS account.', adminHint: 'sudo / wheel members → admin role' },
     settings: { language: 'Language', languageDesc: 'Choose the interface language' },
+    support: {
+      title: 'Support & Help', subtitle: 'Documentation, FAQs, and how to get help',
+      faqTitle: 'Frequently Asked Questions', cmdTitle: 'Quick Commands (Ubuntu Server)',
+      link: { api: 'API Documentation', apiSub: 'OpenAPI Swagger UI', github: 'GitHub Repository', githubSub: 'Source code & issues', contact: 'Contact IT Team', contactSub: 'it@polsri.ac.id' },
+      faq: {
+        q1: 'How do I log in?',
+        q1a: 'Use your real Linux username and password. SecureOps authenticates through PAM, so your OS credentials are the only ones needed. Members of the sudo/wheel/admin group get admin role; everyone else is auditor (read-only).',
+        q2: 'A scan returned demo data — why?',
+        q2a: "You're running SecureOps on a non-Linux machine (e.g. Windows for development). Permission audit, sudoers parsing, and PAM all require Linux. On the Ubuntu server everything switches to live data.",
+        q3: 'How do I add a file to integrity monitoring?',
+        q3a: 'Open the Integrity page and enter the absolute path (e.g. /etc/passwd) in the "Add File to Monitor" form. The system computes its SHA256 hash on first scan and alerts when the hash changes.',
+        q4: 'Where are activity logs stored?',
+        q4a: 'In the local SQLite database (backend/secureops.db). Every login, scan, and configuration change is logged with username, timestamp, and source IP.',
+        q5: 'Can I run multiple scans at once?',
+        q5a: 'Yes — Permission Audit, Sudo Monitor, and File Integrity are independent endpoints, each non-blocking. Run them in parallel.',
+      },
+    },
+    fleet: { title: 'Fleet Overview', serversOnline: '{online}/{total} servers online · auto-refresh every 10s', online: 'ONLINE', offline: 'OFFLINE', cpu: 'CPU', memory: 'Memory', disk: 'Disk', unreachable: 'Unreachable', viewDetails: 'View details' },
+    network: { title: 'Network Status', subtitle: 'Live network interfaces & traffic on {host}', unavailable: 'Network metrics unavailable', statSent: 'Bytes Sent', statRecv: 'Bytes Received', statPktIn: 'Packets In', statErrors: 'Errors', ifaces: 'Network Interfaces ({n})', colInterface: 'Interface', colIpv4: 'IPv4', colMac: 'MAC', colSpeed: 'Speed', colSent: 'Sent', colReceived: 'Received', up: 'UP', down: 'DOWN', ports: 'Listening Ports ({n})', colProtocol: 'Protocol', colAddress: 'Address', colPort: 'Port', colPid: 'PID', noPorts: 'No listening ports visible (try running backend with sudo to enumerate)' },
+    health: { title: 'System Health', live: 'Live', failedLoad: 'Failed to load', unavailable: 'System metrics unavailable', cpuUsage: 'CPU Usage', cores: '{n} cores', memory: 'Memory', disk: 'Disk', uptime: 'Uptime', since: 'Since {date}', cpuPerCore: 'CPU Per Core', core: 'core {i}', load1: 'Load 1m', load5: 'Load 5m', load15: 'Load 15m', sysInfo: 'System Info', rowHostname: 'Hostname', rowPlatform: 'Platform', rowArch: 'Architecture', rowPython: 'Python', rowProcesses: 'Processes', rowMemTotal: 'Memory Total', rowSwap: 'Swap', rowDiskFree: 'Disk Free' },
+    alerts: { title: 'Security Alerts', subtitle: 'Aggregated alerts from all monitoring modules', active: 'Active Alerts ({n})', allClear: 'All Clear', noAlerts: 'No {sev} alerts at this time', source: 'source: {s}' },
   },
 
   id: {
-    common: { loading: 'Memuat…', generating: 'Membuat…', save: 'Simpan', saved: 'Tersimpan', cancel: 'Batal', search: 'Cari', all: 'Semua', today: 'Hari ini', days7: '7 Hari', next: 'Berikutnya', prev: 'Sebelumnya', active: 'aktif', success: 'Berhasil', failed: 'Gagal', applyReload: 'Terapkan & Muat Ulang' },
+    common: { loading: 'Memuat…', generating: 'Membuat…', save: 'Simpan', saved: 'Tersimpan', cancel: 'Batal', search: 'Cari', all: 'Semua', today: 'Hari ini', days7: '7 Hari', next: 'Berikutnya', prev: 'Sebelumnya', active: 'aktif', success: 'Berhasil', failed: 'Gagal', applyReload: 'Terapkan & Muat Ulang', refresh: 'Segarkan', status: 'Status' },
     sev: { critical: 'Kritis', high: 'Tinggi', medium: 'Sedang', low: 'Rendah' },
     nav: { dashboard: 'Dasbor', fleet: 'Armada', audit: 'Audit', sudo: 'Sudo', integrity: 'Integritas', logs: 'Log', terminal: 'Terminal', replays: 'Rekaman', servers: 'Server', users: 'Pengguna', settings: 'Pengaturan', support: 'Bantuan' },
     top: { systemHealth: 'Kesehatan Sistem', network: 'Jaringan', alerts: 'Peringatan', searchPlaceholder: 'Cari log, pengguna, atau peringatan…', searching: 'Mencari…', noResults: 'Tidak ada hasil untuk "{q}"', serversCount: 'Server ({n})', manage: 'Kelola', fleetOverview: 'Ikhtisar Armada', noServer: 'Tidak ada server', group: { logs: 'Log Aktivitas', users: 'Pengguna Sudo', files: 'Berkas', permissions: 'Izin Akses' } },
@@ -30,6 +51,27 @@ export const translations = {
     dash: { title: 'Ikhtisar Sistem', lastUpdated: 'Terakhir diperbarui: Baru saja', report: 'Lihat Laporan', totalSudoFiles: 'Total Berkas Sudo', criticalN: 'Kritis: {n}', sudoUsers: 'Pengguna Sudo', integrityStatus: 'Status Integritas', newAlerts: 'Peringatan Baru', actionNeeded: 'perlu tindakan', allClear: 'aman', severityDist: 'Distribusi Tingkat Keparahan', totalIssues: 'Total Masalah', noScanData: 'Belum ada data pindai — jalankan pemindaian dulu', scanActivity: 'Aktivitas Pemindaian Sistem (24 Jam)', scans: 'Pemindaian', recentActivity: 'Aktivitas Terbaru', viewAllLogs: 'Lihat Semua Log', noActivity: 'Belum ada aktivitas — masuk dan jalankan pindai untuk mengisi', colAdmin: 'Admin', colAction: 'Aksi', colTime: 'Waktu', colIp: 'Alamat IP', reportFail: 'Gagal membuat laporan: {msg}' },
     login: { subtitle: 'Dasbor Audit Keamanan', usernamePlaceholder: 'superadmin atau email@domain', passwordPlaceholder: 'Kata sandi akun OS Anda', signIn: 'Masuk', usernameLabel: 'Nama Pengguna / Email', passwordLabel: 'Kata Sandi Linux', passwdHint: 'Gunakan `passwd` di server', invalid: 'Nama pengguna atau kata sandi salah.', pamFooter: 'Terautentikasi via Linux PAM', osHint: 'Masuk dengan akun OS asli Anda.', adminHint: 'anggota sudo / wheel → peran admin' },
     settings: { language: 'Bahasa', languageDesc: 'Pilih bahasa antarmuka' },
+    support: {
+      title: 'Dukungan & Bantuan', subtitle: 'Dokumentasi, FAQ, dan cara mendapat bantuan',
+      faqTitle: 'Pertanyaan yang Sering Diajukan', cmdTitle: 'Perintah Cepat (Server Ubuntu)',
+      link: { api: 'Dokumentasi API', apiSub: 'OpenAPI Swagger UI', github: 'Repositori GitHub', githubSub: 'Kode sumber & isu', contact: 'Hubungi Tim IT', contactSub: 'it@polsri.ac.id' },
+      faq: {
+        q1: 'Bagaimana cara saya masuk?',
+        q1a: 'Gunakan nama pengguna dan kata sandi Linux asli Anda. SecureOps mengautentikasi melalui PAM, jadi hanya kredensial OS yang diperlukan. Anggota grup sudo/wheel/admin mendapat peran admin; lainnya menjadi auditor (hanya-baca).',
+        q2: 'Pemindaian mengembalikan data demo — kenapa?',
+        q2a: 'Anda menjalankan SecureOps di mesin non-Linux (mis. Windows untuk pengembangan). Audit izin, parsing sudoers, dan PAM semuanya memerlukan Linux. Di server Ubuntu semuanya beralih ke data langsung.',
+        q3: 'Bagaimana menambah berkas ke pemantauan integritas?',
+        q3a: 'Buka halaman Integritas dan masukkan jalur absolut (mis. /etc/passwd) pada formulir "Tambah Berkas untuk Dipantau". Sistem menghitung hash SHA256-nya pada pemindaian pertama dan memberi peringatan saat hash berubah.',
+        q4: 'Di mana log aktivitas disimpan?',
+        q4a: 'Di basis data SQLite lokal (backend/secureops.db). Setiap login, pemindaian, dan perubahan konfigurasi dicatat dengan nama pengguna, stempel waktu, dan IP sumber.',
+        q5: 'Bisakah saya menjalankan beberapa pemindaian sekaligus?',
+        q5a: 'Bisa — Audit Izin, Monitor Sudo, dan Integritas Berkas adalah endpoint terpisah yang masing-masing non-blocking. Jalankan secara paralel.',
+      },
+    },
+    fleet: { title: 'Ikhtisar Armada', serversOnline: '{online}/{total} server daring · segarkan otomatis tiap 10 detik', online: 'DARING', offline: 'LURING', cpu: 'CPU', memory: 'Memori', disk: 'Disk', unreachable: 'Tidak terjangkau', viewDetails: 'Lihat detail' },
+    network: { title: 'Status Jaringan', subtitle: 'Antarmuka & lalu lintas jaringan langsung di {host}', unavailable: 'Metrik jaringan tidak tersedia', statSent: 'Byte Terkirim', statRecv: 'Byte Diterima', statPktIn: 'Paket Masuk', statErrors: 'Kesalahan', ifaces: 'Antarmuka Jaringan ({n})', colInterface: 'Antarmuka', colIpv4: 'IPv4', colMac: 'MAC', colSpeed: 'Kecepatan', colSent: 'Terkirim', colReceived: 'Diterima', up: 'AKTIF', down: 'MATI', ports: 'Port Mendengarkan ({n})', colProtocol: 'Protokol', colAddress: 'Alamat', colPort: 'Port', colPid: 'PID', noPorts: 'Tidak ada port mendengarkan yang terlihat (coba jalankan backend dengan sudo untuk menampilkannya)' },
+    health: { title: 'Kesehatan Sistem', live: 'Langsung', failedLoad: 'Gagal memuat', unavailable: 'Metrik sistem tidak tersedia', cpuUsage: 'Penggunaan CPU', cores: '{n} inti', memory: 'Memori', disk: 'Disk', uptime: 'Waktu Aktif', since: 'Sejak {date}', cpuPerCore: 'CPU Per Inti', core: 'inti {i}', load1: 'Beban 1m', load5: 'Beban 5m', load15: 'Beban 15m', sysInfo: 'Info Sistem', rowHostname: 'Nama Host', rowPlatform: 'Platform', rowArch: 'Arsitektur', rowPython: 'Python', rowProcesses: 'Proses', rowMemTotal: 'Total Memori', rowSwap: 'Swap', rowDiskFree: 'Disk Kosong' },
+    alerts: { title: 'Peringatan Keamanan', subtitle: 'Peringatan gabungan dari semua modul pemantauan', active: 'Peringatan Aktif ({n})', allClear: 'Aman', noAlerts: 'Tidak ada peringatan {sev} saat ini', source: 'sumber: {s}' },
   },
 
   ms: {

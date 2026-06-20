@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client'
 import { useServers } from '../context/ServerContext'
+import { useI18n } from '../i18n'
 
 const formatUptime = (s) => {
   if (!s) return '—'
@@ -31,6 +32,7 @@ function Metric({ label, value, unit, percent, sub }) {
 }
 
 export default function SystemHealth() {
+  const { t } = useI18n()
   const { queryParam, selected } = useServers() || { queryParam: {} }
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -38,7 +40,7 @@ export default function SystemHealth() {
 
   const load = () => api.get('/system/health', { params: queryParam })
     .then(({ data }) => { setData(data); setError(null) })
-    .catch(err => setError(err.response?.data?.detail || 'Failed to load'))
+    .catch(err => setError(err.response?.data?.detail || t('health.failedLoad')))
     .finally(() => setLoading(false))
 
   useEffect(() => {
@@ -56,66 +58,66 @@ export default function SystemHealth() {
   )
 
   if (error) return <div className="card p-6 text-danger text-sm">{error}</div>
-  if (!data?.available) return <div className="card p-6 text-gray-500 text-sm">{data?.reason || 'System metrics unavailable'}</div>
+  if (!data?.available) return <div className="card p-6 text-gray-500 text-sm">{data?.reason || t('health.unavailable')}</div>
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">System Health</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('health.title')}</h1>
           <p className="text-gray-500 text-sm mt-0.5 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-            Live · {data.hostname} · {data.system} {data.release}
+            {t('health.live')} · {data.hostname} · {data.system} {data.release}
           </p>
         </div>
         <button onClick={load} className="btn-secondary shrink-0">
           <span className="material-symbols-outlined text-lg">refresh</span>
-          <span className="hidden sm:inline">Refresh</span>
+          <span className="hidden sm:inline">{t('common.refresh')}</span>
         </button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Metric label="CPU Usage"    value={data.cpu.percent} unit="%" percent={data.cpu.percent}
-                sub={`${data.cpu.cores_logical} cores`} />
-        <Metric label="Memory"       value={data.memory.percent} unit="%" percent={data.memory.percent}
+        <Metric label={t('health.cpuUsage')} value={data.cpu.percent} unit="%" percent={data.cpu.percent}
+                sub={t('health.cores', { n: data.cpu.cores_logical })} />
+        <Metric label={t('health.memory')}   value={data.memory.percent} unit="%" percent={data.memory.percent}
                 sub={`${data.memory.used_gb}/${data.memory.total_gb} GB`} />
-        <Metric label="Disk"         value={data.disk.percent} unit="%" percent={data.disk.percent}
+        <Metric label={t('health.disk')}     value={data.disk.percent} unit="%" percent={data.disk.percent}
                 sub={`${data.disk.used_gb}/${data.disk.total_gb} GB`} />
-        <Metric label="Uptime"       value={formatUptime(data.uptime_seconds)} unit=""
-                sub={`Since ${new Date(data.boot_time).toLocaleDateString()}`} />
+        <Metric label={t('health.uptime')}   value={formatUptime(data.uptime_seconds)} unit=""
+                sub={t('health.since', { date: new Date(data.boot_time).toLocaleDateString() })} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <div className="card p-5">
-          <h3 className="text-gray-800 font-semibold mb-4">CPU Per Core</h3>
+          <h3 className="text-gray-800 font-semibold mb-4">{t('health.cpuPerCore')}</h3>
           <div className="space-y-2">
             {data.cpu.per_cpu.map((p, i) => (
               <div key={i} className="flex items-center gap-3">
-                <span className="text-xs font-mono text-gray-500 w-12">core {i}</span>
+                <span className="text-xs font-mono text-gray-500 w-12">{t('health.core', { i })}</span>
                 <div className="flex-1"><Bar percent={p} /></div>
                 <span className="text-xs font-mono text-gray-700 w-12 text-right">{p.toFixed(1)}%</span>
               </div>
             ))}
           </div>
           <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-3 gap-2 text-center">
-            <div><p className="text-xs text-gray-400">Load 1m</p><p className="text-lg font-bold text-gray-800">{data.cpu.load_1m}</p></div>
-            <div><p className="text-xs text-gray-400">Load 5m</p><p className="text-lg font-bold text-gray-800">{data.cpu.load_5m}</p></div>
-            <div><p className="text-xs text-gray-400">Load 15m</p><p className="text-lg font-bold text-gray-800">{data.cpu.load_15m}</p></div>
+            <div><p className="text-xs text-gray-400">{t('health.load1')}</p><p className="text-lg font-bold text-gray-800">{data.cpu.load_1m}</p></div>
+            <div><p className="text-xs text-gray-400">{t('health.load5')}</p><p className="text-lg font-bold text-gray-800">{data.cpu.load_5m}</p></div>
+            <div><p className="text-xs text-gray-400">{t('health.load15')}</p><p className="text-lg font-bold text-gray-800">{data.cpu.load_15m}</p></div>
           </div>
         </div>
 
         <div className="card p-5">
-          <h3 className="text-gray-800 font-semibold mb-4">System Info</h3>
+          <h3 className="text-gray-800 font-semibold mb-4">{t('health.sysInfo')}</h3>
           <table className="w-full text-sm">
             <tbody className="divide-y divide-gray-50">
-              <Row k="Hostname"     v={data.hostname} />
-              <Row k="Platform"     v={data.platform} />
-              <Row k="Architecture" v={data.architecture} />
-              <Row k="Python"       v={data.python_version} />
-              <Row k="Processes"    v={data.processes} />
-              <Row k="Memory Total" v={`${data.memory.total_gb} GB`} />
-              <Row k="Swap"         v={`${data.swap.used_gb} / ${data.swap.total_gb} GB (${data.swap.percent}%)`} />
-              <Row k="Disk Free"    v={`${data.disk.free_gb} GB`} />
+              <Row k={t('health.rowHostname')} v={data.hostname} />
+              <Row k={t('health.rowPlatform')} v={data.platform} />
+              <Row k={t('health.rowArch')}     v={data.architecture} />
+              <Row k={t('health.rowPython')}   v={data.python_version} />
+              <Row k={t('health.rowProcesses')} v={data.processes} />
+              <Row k={t('health.rowMemTotal')} v={`${data.memory.total_gb} GB`} />
+              <Row k={t('health.rowSwap')}     v={`${data.swap.used_gb} / ${data.swap.total_gb} GB (${data.swap.percent}%)`} />
+              <Row k={t('health.rowDiskFree')} v={`${data.disk.free_gb} GB`} />
             </tbody>
           </table>
         </div>
