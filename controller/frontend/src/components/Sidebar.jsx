@@ -1,26 +1,28 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useI18n } from '../i18n'
 
 const navItems = [
-  { to: '/dashboard',        icon: 'grid_view',       label: 'Dashboard' },
-  { to: '/fleet',            icon: 'apps',            label: 'Fleet' },
-  { to: '/permission-audit', icon: 'policy',          label: 'Audit' },
-  { to: '/sudo-monitor',     icon: 'manage_accounts', label: 'Sudo' },
-  { to: '/file-integrity',   icon: 'verified_user',   label: 'Integrity' },
-  { to: '/activity-logs',    icon: 'manage_history',  label: 'Logs' },
-  { to: '/terminal',         icon: 'terminal',        label: 'Terminal',  adminOnly: true },
-  { to: '/recordings',       icon: 'replay',          label: 'Replays',   adminOnly: true },
-  { to: '/servers',          icon: 'dns',             label: 'Servers', adminOnly: true },
-  { to: '/users',            icon: 'group',           label: 'Users',   adminOnly: true },
+  { to: '/dashboard',        icon: 'grid_view',       key: 'dashboard' },
+  { to: '/fleet',            icon: 'apps',            key: 'fleet' },
+  { to: '/permission-audit', icon: 'policy',          key: 'audit' },
+  { to: '/sudo-monitor',     icon: 'manage_accounts', key: 'sudo' },
+  { to: '/file-integrity',   icon: 'verified_user',   key: 'integrity' },
+  { to: '/activity-logs',    icon: 'manage_history',  key: 'logs' },
+  { to: '/terminal',         icon: 'terminal',        key: 'terminal',  adminOnly: true },
+  { to: '/recordings',       icon: 'replay',          key: 'replays',   adminOnly: true },
+  { to: '/servers',          icon: 'dns',             key: 'servers', adminOnly: true },
+  { to: '/users',            icon: 'group',           key: 'users',   adminOnly: true },
 ]
 
 const bottomItems = [
-  { to: '/settings', icon: 'settings',     label: 'Settings' },
-  { to: '/support',  icon: 'help_outline', label: 'Support' },
+  { to: '/settings', icon: 'settings',     key: 'settings' },
+  { to: '/support',  icon: 'help_outline', key: 'support' },
 ]
 
 export default function Sidebar({ open, onClose }) {
   const { user, logout } = useAuth()
+  const { t } = useI18n()
 
   return (
     <aside className={`
@@ -55,7 +57,7 @@ export default function Sidebar({ open, onClose }) {
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
         {navItems
           .filter(item => !item.adminOnly || user?.role === 'admin')
-          .map(({ to, icon, label }) => (
+          .map(({ to, icon, key }) => (
             <NavLink
               key={to}
               to={to}
@@ -65,7 +67,7 @@ export default function Sidebar({ open, onClose }) {
               {({ isActive }) => (
                 <>
                   <span className={`material-symbols-outlined text-xl ${isActive ? 'filled' : ''}`}>{icon}</span>
-                  {label}
+                  {t(`nav.${key}`)}
                 </>
               )}
             </NavLink>
@@ -74,7 +76,7 @@ export default function Sidebar({ open, onClose }) {
 
       {/* Bottom */}
       <div className="px-3 pb-3 safe-bottom border-t border-white/40 pt-3 space-y-1">
-        {bottomItems.map(({ to, icon, label }) => (
+        {bottomItems.map(({ to, icon, key }) => (
           <NavLink
             key={to}
             to={to}
@@ -82,7 +84,7 @@ export default function Sidebar({ open, onClose }) {
             className={({ isActive }) => `nav-item ${isActive ? 'nav-item-active' : 'nav-item-idle'}`}
           >
             <span className="material-symbols-outlined text-xl">{icon}</span>
-            {label}
+            {t(`nav.${key}`)}
           </NavLink>
         ))}
 

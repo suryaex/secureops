@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useI18n } from '../i18n'
 import api, { apiBaseURL, setApiBaseURL } from '../api/client'
 
 export default function Settings() {
   const { user } = useAuth()
+  const { t, lang, setLang, languages } = useI18n()
   const [health, setHealth] = useState(null)
   const [notif, setNotif] = useState(() => localStorage.getItem('so_notif') !== '0')
   const [autoRefresh, setAutoRefresh] = useState(() => localStorage.getItem('so_autorefresh') !== '0')
@@ -29,6 +31,30 @@ export default function Settings() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
         <p className="text-gray-500 text-sm mt-0.5">Manage your account & application preferences</p>
+      </div>
+
+      <div className="card p-5">
+        <h3 className="text-gray-800 font-semibold mb-1 flex items-center gap-2">
+          <span className="material-symbols-outlined text-primary">translate</span>
+          {t('settings.language')}
+        </h3>
+        <p className="text-gray-500 text-xs mb-4">{t('settings.languageDesc')}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {languages.map(l => (
+            <button
+              key={l.code}
+              onClick={() => setLang(l.code)}
+              className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-colors ${
+                lang === l.code
+                  ? 'border-primary bg-blue-50 text-primary'
+                  : 'border-gray-200 text-gray-600 hover:border-primary'
+              }`}
+            >
+              <span className="text-base">{l.flag}</span>
+              <span className="truncate">{l.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="card p-5">

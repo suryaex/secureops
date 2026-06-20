@@ -2,18 +2,21 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useServers } from '../context/ServerContext'
+import { useI18n } from '../i18n'
+import LanguageSwitcher from './LanguageSwitcher'
 import api from '../api/client'
 
 const tabs = [
-  { label: 'System Health', to: '/system-health' },
-  { label: 'Network',       to: '/network' },
-  { label: 'Alerts',        to: '/alerts' },
+  { key: 'systemHealth', to: '/system-health' },
+  { key: 'network',      to: '/network' },
+  { key: 'alerts',       to: '/alerts' },
 ]
 
 export default function TopBar({ onMenuClick }) {
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const { t } = useI18n()
   const { servers, serverId, selected, select } = useServers() || {}
   const [showServerMenu, setShowServerMenu] = useState(false)
   const serverMenuRef = useRef(null)
@@ -94,24 +97,24 @@ export default function TopBar({ onMenuClick }) {
           value={search}
           onChange={e => setSearch(e.target.value)}
           onFocus={() => search && setOpen(true)}
-          placeholder="Search logs, users, or alerts…"
+          placeholder={t('top.searchPlaceholder')}
           className="search-input"
         />
 
         {open && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-lg overflow-hidden z-30 max-h-[420px] overflow-y-auto">
             {searching && (
-              <div className="px-4 py-6 text-center text-gray-400 text-sm">Searching…</div>
+              <div className="px-4 py-6 text-center text-gray-400 text-sm">{t('top.searching')}</div>
             )}
             {!searching && results && results.total === 0 && (
-              <div className="px-4 py-6 text-center text-gray-400 text-sm">No results for "{results.query}"</div>
+              <div className="px-4 py-6 text-center text-gray-400 text-sm">{t('top.noResults', { q: results.query })}</div>
             )}
             {!searching && results && results.total > 0 && (
               <div className="py-2">
-                <SearchGroup title="Activity Logs" items={results.logs} onPick={go} icon="manage_history" />
-                <SearchGroup title="Sudo Users"    items={results.users} onPick={go} icon="manage_accounts" />
-                <SearchGroup title="Files"         items={results.files} onPick={go} icon="verified_user" />
-                <SearchGroup title="Permissions"   items={results.permissions} onPick={go} icon="policy" />
+                <SearchGroup title={t('top.group.logs')}        items={results.logs} onPick={go} icon="manage_history" />
+                <SearchGroup title={t('top.group.users')}       items={results.users} onPick={go} icon="manage_accounts" />
+                <SearchGroup title={t('top.group.files')}       items={results.files} onPick={go} icon="verified_user" />
+                <SearchGroup title={t('top.group.permissions')} items={results.permissions} onPick={go} icon="policy" />
               </div>
             )}
           </div>
@@ -133,15 +136,15 @@ export default function TopBar({ onMenuClick }) {
             }`} />
             <span className="material-symbols-outlined text-base text-gray-500">dns</span>
             <span className="text-gray-800 font-medium truncate max-w-[100px] md:max-w-[120px]">
-              {selected?.name || 'No server'}
+              {selected?.name || t('top.noServer')}
             </span>
             <span className="material-symbols-outlined text-base text-gray-400">expand_more</span>
           </button>
           {showServerMenu && (
             <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden z-30">
               <div className="px-4 py-2 border-b border-gray-50 flex items-center justify-between">
-                <p className="text-xs uppercase tracking-wider text-gray-400 font-semibold">Servers ({servers.length})</p>
-                <Link to="/servers" onClick={() => setShowServerMenu(false)} className="text-primary text-xs font-medium hover:underline">Manage</Link>
+                <p className="text-xs uppercase tracking-wider text-gray-400 font-semibold">{t('top.serversCount', { n: servers.length })}</p>
+                <Link to="/servers" onClick={() => setShowServerMenu(false)} className="text-primary text-xs font-medium hover:underline">{t('top.manage')}</Link>
               </div>
               <div className="max-h-72 overflow-y-auto">
                 {servers.map(s => (
@@ -169,7 +172,7 @@ export default function TopBar({ onMenuClick }) {
               </div>
               <Link to="/fleet" onClick={() => setShowServerMenu(false)} className="flex items-center gap-2 px-4 py-2.5 border-t border-gray-50 text-sm text-gray-700 hover:bg-gray-50">
                 <span className="material-symbols-outlined text-base">apps</span>
-                Fleet Overview
+                {t('top.fleetOverview')}
               </Link>
             </div>
           )}
@@ -182,7 +185,7 @@ export default function TopBar({ onMenuClick }) {
           const active = pathname === tab.to
           return (
             <Link
-              key={tab.label}
+              key={tab.key}
               to={tab.to}
               className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150 ${
                 active
@@ -190,7 +193,7 @@ export default function TopBar({ onMenuClick }) {
                   : 'text-gray-500 hover:text-gray-800'
               }`}
             >
-              {tab.label}
+              {t(`top.${tab.key}`)}
             </Link>
           )
         })}
@@ -198,7 +201,8 @@ export default function TopBar({ onMenuClick }) {
 
       {/* Icons */}
       <div className="flex items-center gap-1 md:gap-2 shrink-0">
-        <Link to="/alerts" className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-50 text-gray-500 transition-colors" title="Alerts">
+        <LanguageSwitcher />
+        <Link to="/alerts" className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-50 text-gray-500 transition-colors" title={t('top.alerts')}>
           <span className="material-symbols-outlined text-xl">notifications</span>
           {alertCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 bg-danger rounded-full border-2 border-white text-[10px] text-white font-bold flex items-center justify-center">
@@ -222,25 +226,25 @@ export default function TopBar({ onMenuClick }) {
             <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden z-30">
               <div className="px-4 py-3 border-b border-gray-50">
                 <p className="text-gray-900 font-semibold text-sm">{user?.username}</p>
-                <p className="text-gray-400 text-xs capitalize">{user?.role} · Linux Account</p>
+                <p className="text-gray-400 text-xs capitalize">{user?.role} · {t('menu.linuxAccount')}</p>
               </div>
               <Link to="/settings" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
-                <span className="material-symbols-outlined text-base">settings</span> Settings
+                <span className="material-symbols-outlined text-base">settings</span> {t('menu.settings')}
               </Link>
               <Link to="/support" onClick={() => setShowUserMenu(false)} className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
-                <span className="material-symbols-outlined text-base">help_outline</span> Support
+                <span className="material-symbols-outlined text-base">help_outline</span> {t('menu.support')}
               </Link>
               {/* Server selector shortcut on mobile */}
               {servers && servers.length > 0 && (
                 <Link to="/servers" onClick={() => setShowUserMenu(false)} className="sm:hidden flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
-                  <span className="material-symbols-outlined text-base">dns</span> Servers
+                  <span className="material-symbols-outlined text-base">dns</span> {t('menu.servers')}
                 </Link>
               )}
               <button
                 onClick={() => { setShowUserMenu(false); logout() }}
                 className="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger hover:bg-red-50 border-t border-gray-50"
               >
-                <span className="material-symbols-outlined text-base">logout</span> Logout
+                <span className="material-symbols-outlined text-base">logout</span> {t('menu.logout')}
               </button>
             </div>
           )}
