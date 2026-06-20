@@ -3,7 +3,7 @@ import { useI18n } from '../i18n'
 
 // Tombol pemilih bahasa untuk TopBar (dropdown ringkas dengan bendera).
 export default function LanguageSwitcher() {
-  const { lang, setLang, languages } = useI18n()
+  const { lang, setLang, languages, t } = useI18n()
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -20,8 +20,8 @@ export default function LanguageSwitcher() {
       <button
         onClick={() => setOpen(v => !v)}
         className="flex items-center gap-1.5 w-9 h-9 justify-center rounded-xl hover:bg-gray-50 text-gray-500 transition-colors"
-        title="Language"
-        aria-label="Change language"
+        title={t('settings.language')}
+        aria-label={t('settings.language')}
       >
         <span className="material-symbols-outlined text-xl">translate</span>
       </button>
