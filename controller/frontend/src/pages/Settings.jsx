@@ -29,8 +29,8 @@ export default function Settings() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Manage your account & application preferences</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('settings.title')}</h1>
+        <p className="text-gray-500 text-sm mt-0.5">{t('settings.subtitle')}</p>
       </div>
 
       <div className="card p-5">
@@ -60,27 +60,27 @@ export default function Settings() {
       <div className="card p-5">
         <h3 className="text-gray-800 font-semibold mb-4 flex items-center gap-2">
           <span className="material-symbols-outlined text-primary">person</span>
-          Account
+          {t('settings.account')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Username" value={user?.username} />
-          <Field label="Role" value={user?.role} />
-          <Field label="Authentication" value="Linux PAM" />
-          <Field label="Token Expiry" value="8 hours" />
+          <Field label={t('settings.acctUsername')} value={user?.username} />
+          <Field label={t('settings.acctRole')} value={user?.role} />
+          <Field label={t('settings.acctAuth')} value="Linux PAM" />
+          <Field label={t('settings.acctTokenExpiry')} value={t('settings.acctTokenExpiryVal')} />
         </div>
         <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl text-sm text-blue-700">
           <span className="material-symbols-outlined text-base align-middle mr-1">info</span>
-          To change your password, use <code className="font-mono bg-white px-1.5 py-0.5 rounded">passwd</code> command on the Linux server. Authentication is delegated to the OS.
+          {t('settings.acctPwHint', { cmd: 'passwd' }).split('passwd').flatMap((part, i) => i === 0 ? [part] : [<code key={i} className="font-mono bg-white px-1.5 py-0.5 rounded">passwd</code>, part])}
         </div>
       </div>
 
       <div className="card p-5">
         <h3 className="text-gray-800 font-semibold mb-4 flex items-center gap-2">
           <span className="material-symbols-outlined text-primary">dns</span>
-          API Server
+          {t('settings.apiServer')}
         </h3>
         <p className="text-gray-500 text-xs mb-3">
-          Required for the mobile app. Set the full URL (e.g. <code className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">https://secureops.polsri.ac.id</code>) — do not include <code className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">/api</code> at the end.
+          {t('settings.apiServerDesc', { url: 'https://secureops.polsri.ac.id', api: '/api' })}
         </p>
         <div className="flex gap-2">
           <input
@@ -91,34 +91,34 @@ export default function Settings() {
             className="input flex-1"
           />
           <button onClick={() => setApiBaseURL(serverURL.trim())} className="btn-primary shrink-0">
-            <span className="material-symbols-outlined text-lg">save</span>Apply & Reload
+            <span className="material-symbols-outlined text-lg">save</span>{t('common.applyReload')}
           </button>
           {serverURL && (
-            <button onClick={() => setApiBaseURL('')} className="btn-secondary shrink-0" title="Reset to default">
+            <button onClick={() => setApiBaseURL('')} className="btn-secondary shrink-0" title={t('settings.resetDefault')}>
               <span className="material-symbols-outlined text-lg">restart_alt</span>
             </button>
           )}
         </div>
         <p className="text-gray-400 text-xs mt-2">
-          Current effective: <code className="font-mono text-gray-700">{apiBaseURL || '(none — set server URL)'}</code>
+          {t('settings.apiServerCurrent')} <code className="font-mono text-gray-700">{apiBaseURL || t('settings.apiServerNone')}</code>
         </p>
       </div>
 
       <div className="card p-5">
         <h3 className="text-gray-800 font-semibold mb-4 flex items-center gap-2">
           <span className="material-symbols-outlined text-primary">tune</span>
-          Preferences
+          {t('settings.preferences')}
         </h3>
         <div className="space-y-3">
-          <Toggle label="Enable browser notifications for new alerts" checked={notif} onChange={setNotif} />
-          <Toggle label="Auto-refresh dashboards every 5s" checked={autoRefresh} onChange={setAutoRefresh} />
+          <Toggle label={t('settings.prefNotif')} checked={notif} onChange={setNotif} />
+          <Toggle label={t('settings.prefAutoRefresh')} checked={autoRefresh} onChange={setAutoRefresh} />
         </div>
         <div className="mt-5 flex items-center gap-3">
           <button onClick={save} className="btn-primary">
-            <span className="material-symbols-outlined text-lg">save</span>Save Preferences
+            <span className="material-symbols-outlined text-lg">save</span>{t('settings.savePrefs')}
           </button>
           {saved && <span className="text-success text-sm flex items-center gap-1">
-            <span className="material-symbols-outlined text-base">check_circle</span>Saved
+            <span className="material-symbols-outlined text-base">check_circle</span>{t('common.saved')}
           </span>}
         </div>
       </div>
@@ -127,13 +127,13 @@ export default function Settings() {
         <div className="card p-5">
           <h3 className="text-gray-800 font-semibold mb-4 flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">dns</span>
-            Server
+            {t('settings.server')}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="Hostname"   value={health.hostname} />
-            <Field label="System"     value={`${health.system} ${health.release}`} />
-            <Field label="Platform"   value={health.platform} mono />
-            <Field label="Python"     value={health.python_version} mono />
+            <Field label={t('settings.srvHostname')} value={health.hostname} />
+            <Field label={t('settings.srvSystem')}   value={`${health.system} ${health.release}`} />
+            <Field label={t('settings.srvPlatform')} value={health.platform} mono />
+            <Field label={t('settings.srvPython')}   value={health.python_version} mono />
           </div>
         </div>
       )}
@@ -141,11 +141,11 @@ export default function Settings() {
       <div className="card p-5">
         <h3 className="text-gray-800 font-semibold mb-4 flex items-center gap-2">
           <span className="material-symbols-outlined text-primary">info</span>
-          About
+          {t('settings.about')}
         </h3>
         <div className="space-y-2 text-sm">
           <p className="text-gray-700"><span className="font-semibold">SecureOps</span> v1.1.0</p>
-          <p className="text-gray-500">State Polytechnic of Sriwijaya — Security Audit Dashboard</p>
+          <p className="text-gray-500">{t('settings.aboutDesc')}</p>
           <p className="text-gray-400 text-xs">FastAPI · React · SQLite · Linux PAM</p>
         </div>
       </div>

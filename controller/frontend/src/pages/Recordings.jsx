@@ -5,6 +5,7 @@ import 'xterm/css/xterm.css'
 
 import { useAuth } from '../context/AuthContext'
 import { useServers } from '../context/ServerContext'
+import { useI18n } from '../i18n'
 import api from '../api/client'
 
 /**
@@ -31,6 +32,7 @@ const fmtDur  = (s) => {
 }
 
 export default function Recordings() {
+  const { t } = useI18n()
   const { user } = useAuth()
   const { selected, servers } = useServers() || {}
   const isAdmin = user?.role === 'admin'
@@ -90,13 +92,13 @@ export default function Recordings() {
       const res = await api.get(`/terminal/${selected.id}/recordings/${rec.name}`, { responseType: 'text', transformResponse: x => x })
       text = res.data
     } catch (e) {
-      term.write(`\x1b[31m[error] cannot load recording: ${e.message}\x1b[0m\r\n`)
+      term.write(`\x1b[31m${t('recordings.loadError', { msg: e.message })}\x1b[0m\r\n`)
       setPlaying(false); return
     }
 
     const lines = text.split('\n').filter(Boolean)
     if (lines.length < 2) {
-      term.write('\x1b[33m(empty recording)\x1b[0m')
+      term.write(`\x1b[33m${t('recordings.emptyRecording')}\x1b[0m`)
       setPlaying(false); return
     }
 
@@ -154,7 +156,7 @@ export default function Recordings() {
     return (
       <div className="card p-10 text-center">
         <span className="material-symbols-outlined text-6xl text-warning filled">lock</span>
-        <h2 className="text-xl font-bold text-ink mt-3">Admin Access Required</h2>
+        <h2 className="text-xl font-bold text-ink mt-3">{t('recordings.adminRequired')}</h2>
       </div>
     )
   }
@@ -162,26 +164,26 @@ export default function Recordings() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="h-page">Session Replays</h1>
+        <h1 className="h-page">{t('recordings.title')}</h1>
         <p className="text-ink-muted text-sm mt-0.5">
           {selected && !selected.is_local
-            ? <>Recorded terminal sessions on <b className="text-ink">{selected.name}</b></>
-            : 'Pick a remote agent from the top-bar selector.'}
+            ? t('recordings.subtitleServer', { name: selected.name })
+            : t('recordings.subtitlePick')}
         </p>
       </div>
 
       {(!selected || selected.is_local) ? (
         <div className="card p-4 border-l-4 border-warning flex items-start gap-3">
           <span className="material-symbols-outlined text-warning text-xl mt-0.5">info</span>
-          <p className="text-sm text-ink-muted">Session recordings live on each agent. Use the top-bar to pick a remote server.</p>
+          <p className="text-sm text-ink-muted">{t('recordings.pickHint')}</p>
         </div>
       ) : (
         <>
           <div className="card overflow-hidden">
             <div className="px-5 py-4 border-b border-white/30 flex items-center justify-between">
-              <h3 className="h-card">Available recordings ({recordings.length})</h3>
+              <h3 className="h-card">{t('recordings.available', { n: recordings.length })}</h3>
               <button onClick={load} className="btn-ghost">
-                <span className="material-symbols-outlined text-base">refresh</span>Refresh
+                <span className="material-symbols-outlined text-base">refresh</span>{t('recordings.refresh')}
               </button>
             </div>
             <div className="max-h-72 overflow-y-auto divide-y divide-white/20">
@@ -191,9 +193,9 @@ export default function Recordings() {
                 </div>
               ) : recordings.length === 0 ? (
                 <div className="p-10 text-center text-ink-muted text-sm">
-                  No recordings yet.<br />
+                  {t('recordings.noRecordings')}<br />
                   <span className="text-xs">
-                    Enable on the agent: <code className="bg-black/5 px-1.5 py-0.5 rounded font-mono">SECUREOPS_RECORD_SESSIONS=1</code>
+                    {t('recordings.enableHint', { cmd: '' })}<code className="bg-black/5 px-1.5 py-0.5 rounded font-mono">SECUREOPS_RECORD_SESSIONS=1</code>
                   </span>
                 </div>
               ) : recordings.map(r => (
@@ -207,7 +209,7 @@ export default function Recordings() {
                     <p className="text-ink-muted text-xs">{fmtTime(r.mtime)} · {fmtSize(r.size)}</p>
                   </div>
                   <button onClick={(e) => { e.stopPropagation(); downloadCast(r) }}
-                          className="btn-ghost" title="Download .cast">
+                          className="btn-ghost" title={t('recordings.downloadCast')}>
                     <span className="material-symbols-outlined text-base">download</span>
                   </button>
                 </div>
@@ -232,11 +234,11 @@ export default function Recordings() {
               <div className="px-4 py-3 border-t border-white/10 bg-black/40 flex items-center gap-3">
                 {playing ? (
                   <button onClick={stopReplay} className="btn-danger">
-                    <span className="material-symbols-outlined text-base">stop</span>Stop
+                    <span className="material-symbols-outlined text-base">stop</span>{t('recordings.stop')}
                   </button>
                 ) : (
                   <button onClick={() => replay(active)} className="btn-primary">
-                    <span className="material-symbols-outlined text-base">replay</span>Replay
+                    <span className="material-symbols-outlined text-base">replay</span>{t('recordings.replay')}
                   </button>
                 )}
                 <div className="flex items-center gap-1">

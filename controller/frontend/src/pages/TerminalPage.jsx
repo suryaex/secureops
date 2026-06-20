@@ -7,6 +7,7 @@ import 'xterm/css/xterm.css'
 
 import { useAuth } from '../context/AuthContext'
 import { useServers } from '../context/ServerContext'
+import { useI18n } from '../i18n'
 import { apiBaseURL } from '../api/client'
 
 /**
@@ -43,6 +44,7 @@ function wsURL(serverId, token) {
 }
 
 export default function TerminalPage() {
+  const { t } = useI18n()
   const { user } = useAuth()
   const { selected, servers } = useServers() || {}
   const isAdmin = user?.role === 'admin'
@@ -69,11 +71,11 @@ export default function TerminalPage() {
 
   const connect = () => {
     if (!selected) {
-      setStatus('error'); setError('Pilih server dari pemilih di bilah atas terlebih dahulu.')
+      setStatus('error'); setError(t('terminal.errPickServer'))
       return
     }
     if (!isAdmin) {
-      setStatus('error'); setError('Terminal access requires admin role.')
+      setStatus('error'); setError(t('terminal.errAdmin'))
       return
     }
 
@@ -124,11 +126,11 @@ export default function TerminalPage() {
       else                            term.write(new Uint8Array(e.data))
     }
     ws.onerror = () => {
-      setStatus('error'); setError('Connection failed. Check that the agent is online.')
+      setStatus('error'); setError(t('terminal.errConnFailed'))
     }
     ws.onclose = (e) => {
       setStatus('closed')
-      term.writeln(`\r\n\x1b[33m  Session closed (code ${e.code}${e.reason ? ' · ' + e.reason : ''}).\x1b[0m`)
+      term.writeln(`\r\n\x1b[33m  ${t('terminal.sessionClosed', { code: `${e.code}${e.reason ? ' · ' + e.reason : ''}` })}\x1b[0m`)
     }
 
     term.onData(data => {
@@ -186,9 +188,9 @@ export default function TerminalPage() {
     return (
       <div className="card p-10 text-center">
         <span className="material-symbols-outlined text-6xl text-warning filled">lock</span>
-        <h2 className="text-xl font-bold text-ink mt-3">Admin Access Required</h2>
+        <h2 className="text-xl font-bold text-ink mt-3">{t('terminal.adminRequired')}</h2>
         <p className="text-ink-muted text-sm mt-1">
-          Terminal access is restricted to admin role for safety.
+          {t('terminal.adminRequiredDesc')}
         </p>
       </div>
     )
@@ -204,36 +206,36 @@ export default function TerminalPage() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="h-page">SSH Terminal</h1>
+          <h1 className="h-page">{t('terminal.title')}</h1>
           <p className="text-ink-muted text-sm mt-0.5 flex flex-wrap items-center gap-2">
             <span className={`w-2 h-2 rounded-full ${dotColor}`} />
             <span>{status}</span>
             {selected && <span className="text-outline">·</span>}
-            {selected && <span>Connected to <b className="text-ink">{selected.name}</b> ({selected.hostname})</span>}
+            {selected && <span>{t('terminal.connectedTo', { name: selected.name, host: selected.hostname })}</span>}
           </p>
         </div>
         <div className="flex gap-2 shrink-0">
           <button
             onClick={() => setShowVirtualKeys(v => !v)}
             className="btn-secondary"
-            title="Toggle virtual keys (useful on touch screens)"
+            title={t('terminal.keysTitle')}
           >
             <span className="material-symbols-outlined text-lg">keyboard</span>
-            Keys
+            {t('terminal.keys')}
           </button>
-          <Link to="/recordings" className="btn-secondary" title="Session recordings">
+          <Link to="/recordings" className="btn-secondary" title={t('terminal.replaysTitle')}>
             <span className="material-symbols-outlined text-lg">history</span>
-            Replays
+            {t('terminal.replays')}
           </Link>
           {status === 'connected' ? (
             <button onClick={disconnect} className="btn-danger">
               <span className="material-symbols-outlined text-lg">stop_circle</span>
-              Disconnect
+              {t('terminal.disconnect')}
             </button>
           ) : (
             <button onClick={connect} className="btn-primary">
               <span className="material-symbols-outlined text-lg">play_arrow</span>
-              {status === 'closed' || status === 'error' ? 'Reconnect' : 'Connect'}
+              {status === 'closed' || status === 'error' ? t('terminal.reconnect') : t('terminal.connect')}
             </button>
           )}
         </div>
@@ -244,9 +246,9 @@ export default function TerminalPage() {
         <div className="card p-4 border-l-4 border-warning flex items-start gap-3">
           <span className="material-symbols-outlined text-warning text-xl mt-0.5">info</span>
           <div className="text-sm">
-            <p className="text-ink font-medium">Pilih server</p>
+            <p className="text-ink font-medium">{t('terminal.pickServer')}</p>
             <p className="text-ink-muted mt-0.5">
-              Gunakan pemilih server di bilah atas untuk memilih controller atau agent yang akan diakses terminalnya.
+              {t('terminal.pickServerDesc')}
             </p>
           </div>
         </div>
@@ -257,7 +259,7 @@ export default function TerminalPage() {
         <div className="card p-3 flex items-center gap-3 border-l-4 border-primary text-xs">
           <span className="material-symbols-outlined text-primary text-base filled">dns</span>
           <span className="text-ink-muted">
-            Terminal ini berjalan <b className="text-ink">langsung di controller</b> ({selected.hostname}). Shell dijalankan dengan hak akses proses backend.
+            {t('terminal.localTitle', { host: selected.hostname })}
           </span>
         </div>
       )}
@@ -273,7 +275,7 @@ export default function TerminalPage() {
       <div className="card p-3 flex items-center gap-3 border-l-4 border-primary text-xs">
         <span className="material-symbols-outlined text-primary text-base filled">fiber_manual_record</span>
         <span className="text-ink-muted">
-          <b className="text-ink">Session is audited</b> — every connection (open/close) is recorded in Activity Logs with your username, source IP, and duration.
+          {t('terminal.auditBanner')}
         </span>
       </div>
 
@@ -290,7 +292,7 @@ export default function TerminalPage() {
           <span className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
           <span className="w-3 h-3 rounded-full bg-[#27C93F]" />
           <span className="text-white/50 text-xs font-mono ml-3">
-            {selected ? `${user?.username}@${selected.name}` : 'no server selected'}
+            {selected ? `${user?.username}@${selected.name}` : t('terminal.noServerSelected')}
           </span>
         </div>
         <div

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useServers } from '../context/ServerContext'
+import { useI18n } from '../i18n'
 import api from '../api/client'
 
 const STATUS_BADGE = {
@@ -11,6 +12,7 @@ const STATUS_BADGE = {
 }
 
 export default function Servers() {
+  const { t } = useI18n()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { refresh, select } = useServers() || {}
@@ -44,13 +46,13 @@ export default function Servers() {
   }
 
   const remove = async (s) => {
-    if (!confirm(`Remove server "${s.name}"? This cannot be undone.`)) return
-    await api.delete(`/servers/${s.id}`).catch(e => alert(e.response?.data?.detail || 'Failed'))
+    if (!confirm(t('servers.removeConfirm', { name: s.name }))) return
+    await api.delete(`/servers/${s.id}`).catch(e => alert(e.response?.data?.detail || t('servers.failed')))
     await load(); refresh && refresh()
   }
 
   const toggleEnabled = async (s) => {
-    await api.patch(`/servers/${s.id}`, { enabled: !s.enabled }).catch(e => alert(e.response?.data?.detail || 'Failed'))
+    await api.patch(`/servers/${s.id}`, { enabled: !s.enabled }).catch(e => alert(e.response?.data?.detail || t('servers.failed')))
     await load(); refresh && refresh()
   }
 
@@ -58,28 +60,28 @@ export default function Servers() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Monitored Servers</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Fleet of agents this controller talks to</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('servers.title')}</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{t('servers.subtitle')}</p>
         </div>
         <div className="flex gap-2 shrink-0">
           <button onClick={pingAll} className="btn-secondary">
             <span className="material-symbols-outlined text-lg">wifi_tethering</span>
-            <span className="hidden sm:inline">Ping All</span>
+            <span className="hidden sm:inline">{t('servers.pingAll')}</span>
           </button>
           {isAdmin && (
             <button onClick={() => setShowAdd(true)} className="btn-primary">
               <span className="material-symbols-outlined text-lg">add</span>
-              <span className="hidden sm:inline">Add Server</span>
+              <span className="hidden sm:inline">{t('servers.addServer')}</span>
             </button>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Stat label="Total"   value={rows.length} icon="dns"            bg="bg-blue-50 text-blue-500" />
-        <Stat label="Online"  value={rows.filter(s => s.last_status === 'online' || s.is_local).length} icon="check_circle" bg="bg-success-light text-success" />
-        <Stat label="Offline" value={rows.filter(s => s.last_status === 'offline').length} icon="cancel" bg="bg-danger-light text-danger" />
-        <Stat label="Unknown" value={rows.filter(s => s.last_status === 'unknown' && !s.is_local).length} icon="help" bg="bg-gray-100 text-gray-500" />
+        <Stat label={t('servers.statTotal')}   value={rows.length} icon="dns"            bg="bg-blue-50 text-blue-500" />
+        <Stat label={t('servers.statOnline')}  value={rows.filter(s => s.last_status === 'online' || s.is_local).length} icon="check_circle" bg="bg-success-light text-success" />
+        <Stat label={t('servers.statOffline')} value={rows.filter(s => s.last_status === 'offline').length} icon="cancel" bg="bg-danger-light text-danger" />
+        <Stat label={t('servers.statUnknown')} value={rows.filter(s => s.last_status === 'unknown' && !s.is_local).length} icon="help" bg="bg-gray-100 text-gray-500" />
       </div>
 
       {/* ── Mobile card list (< md) ── */}
@@ -89,7 +91,7 @@ export default function Servers() {
             <span className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin inline-block" />
           </div>
         ) : rows.length === 0 ? (
-          <div className="card p-8 text-center text-gray-400 text-sm">No servers yet — tap "Add Server" to register one.</div>
+          <div className="card p-8 text-center text-gray-400 text-sm">{t('servers.noServersMobile')}</div>
         ) : rows.map(s => (
           <div key={s.id} className="card p-4 space-y-3">
             <div className="flex items-start justify-between gap-2">
@@ -102,7 +104,7 @@ export default function Servers() {
                 {s.is_local && <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-bold uppercase shrink-0">local</span>}
               </div>
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border shrink-0 ${STATUS_BADGE[s.last_status] || STATUS_BADGE.unknown}`}>
-                {s.is_local ? 'local' : s.last_status}
+                {s.is_local ? t('servers.local') : t(`servers.${s.last_status}`)}
               </span>
             </div>
             <div className="text-xs text-gray-500 font-mono truncate">{s.api_url}</div>
@@ -116,18 +118,18 @@ export default function Servers() {
             <div className="flex items-center justify-between pt-1 border-t border-gray-100">
               <span className="text-gray-400 text-xs">{s.last_seen ? new Date(s.last_seen).toLocaleString('id-ID', {dateStyle:'short', timeStyle:'short'}) : '—'}</span>
               <div className="flex gap-1">
-                <button onClick={() => ping(s.id)} disabled={pingingId === s.id} title="Ping" className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 disabled:opacity-40">
+                <button onClick={() => ping(s.id)} disabled={pingingId === s.id} title={t('servers.ping')} className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 disabled:opacity-40">
                   <span className="material-symbols-outlined text-base">{pingingId === s.id ? 'sync' : 'wifi_tethering'}</span>
                 </button>
                 {isAdmin && !s.is_local && (
                   <>
-                    <button onClick={() => { select && select(s.id); navigate('/terminal') }} title="Terminal" disabled={s.last_status !== 'online'} className="p-1.5 rounded-lg hover:bg-primary/10 text-primary disabled:opacity-30">
+                    <button onClick={() => { select && select(s.id); navigate('/terminal') }} title={t('servers.terminal')} disabled={s.last_status !== 'online'} className="p-1.5 rounded-lg hover:bg-primary/10 text-primary disabled:opacity-30">
                       <span className="material-symbols-outlined text-base">terminal</span>
                     </button>
-                    <button onClick={() => toggleEnabled(s)} title={s.enabled ? 'Disable' : 'Enable'} className="p-1.5 rounded-lg hover:bg-gray-50 text-gray-600">
+                    <button onClick={() => toggleEnabled(s)} title={s.enabled ? t('servers.disable') : t('servers.enable')} className="p-1.5 rounded-lg hover:bg-gray-50 text-gray-600">
                       <span className="material-symbols-outlined text-base">{s.enabled ? 'visibility' : 'visibility_off'}</span>
                     </button>
-                    <button onClick={() => remove(s)} title="Delete" className="p-1.5 rounded-lg hover:bg-red-50 text-red-600">
+                    <button onClick={() => remove(s)} title={t('servers.delete')} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600">
                       <span className="material-symbols-outlined text-base">delete</span>
                     </button>
                   </>
@@ -143,7 +145,7 @@ export default function Servers() {
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
-              <tr>{['Name', 'Hostname', 'URL', 'Status', 'Tags', 'Last Seen', 'Actions'].map(h => <th key={h}>{h}</th>)}</tr>
+              <tr>{[t('servers.colName'), t('servers.colHostname'), t('servers.colUrl'), t('servers.colStatus'), t('servers.colTags'), t('servers.colLastSeen'), t('servers.colActions')].map(h => <th key={h}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {loading ? (
@@ -151,7 +153,7 @@ export default function Servers() {
                   <span className="w-6 h-6 border-2 border-primary/20 border-t-primary rounded-full animate-spin inline-block" />
                 </td></tr>
               ) : rows.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-12 text-gray-400 text-sm">No servers yet — click "Add Server" to register one.</td></tr>
+                <tr><td colSpan={7} className="text-center py-12 text-gray-400 text-sm">{t('servers.noServers')}</td></tr>
               ) : rows.map(s => (
                 <tr key={s.id}>
                   <td>
@@ -170,7 +172,7 @@ export default function Servers() {
                     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${
                       STATUS_BADGE[s.last_status] || STATUS_BADGE.unknown
                     }`}>
-                      {s.is_local ? 'local' : s.last_status}
+                      {s.is_local ? t('servers.local') : t(`servers.${s.last_status}`)}
                     </span>
                   </td>
                   <td>
@@ -185,23 +187,23 @@ export default function Servers() {
                   </td>
                   <td>
                     <div className="flex gap-1">
-                      <button onClick={() => ping(s.id)} disabled={pingingId === s.id} title="Ping" className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 disabled:opacity-40">
+                      <button onClick={() => ping(s.id)} disabled={pingingId === s.id} title={t('servers.ping')} className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-600 disabled:opacity-40">
                         <span className="material-symbols-outlined text-base">{pingingId === s.id ? 'sync' : 'wifi_tethering'}</span>
                       </button>
                       {isAdmin && !s.is_local && (
                         <>
                           <button
                             onClick={() => { select && select(s.id); navigate('/terminal') }}
-                            title="Open Terminal"
+                            title={t('servers.openTerminal')}
                             disabled={s.last_status !== 'online'}
                             className="p-1.5 rounded-lg hover:bg-primary/10 text-primary disabled:opacity-30 disabled:cursor-not-allowed"
                           >
                             <span className="material-symbols-outlined text-base">terminal</span>
                           </button>
-                          <button onClick={() => toggleEnabled(s)} title={s.enabled ? 'Disable' : 'Enable'} className="p-1.5 rounded-lg hover:bg-gray-50 text-gray-600">
+                          <button onClick={() => toggleEnabled(s)} title={s.enabled ? t('servers.disable') : t('servers.enable')} className="p-1.5 rounded-lg hover:bg-gray-50 text-gray-600">
                             <span className="material-symbols-outlined text-base">{s.enabled ? 'visibility' : 'visibility_off'}</span>
                           </button>
-                          <button onClick={() => remove(s)} title="Delete" className="p-1.5 rounded-lg hover:bg-red-50 text-red-600">
+                          <button onClick={() => remove(s)} title={t('servers.delete')} className="p-1.5 rounded-lg hover:bg-red-50 text-red-600">
                             <span className="material-symbols-outlined text-base">delete</span>
                           </button>
                         </>
@@ -247,6 +249,7 @@ function Stat({ label, value, icon, bg }) {
 }
 
 function AddServerModal({ onClose, onSaved }) {
+  const { t } = useI18n()
   // 2 modes: 'quick' (auto-join via token) or 'manual' (paste API URL + key)
   const [mode, setMode] = useState('quick')
 
@@ -256,7 +259,7 @@ function AddServerModal({ onClose, onSaved }) {
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
           <h3 className="text-gray-800 font-semibold flex items-center gap-2">
             <span className="material-symbols-outlined text-primary">add_to_queue</span>
-            Add a new server
+            {t('servers.addNewServer')}
           </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
             <span className="material-symbols-outlined">close</span>
@@ -276,10 +279,10 @@ function AddServerModal({ onClose, onSaved }) {
             >
               <div className="flex items-center justify-center gap-2 mb-1">
                 <span className="material-symbols-outlined">bolt</span>
-                <span>One-Liner (Recommended)</span>
+                <span>{t('servers.oneLiner')}</span>
               </div>
               <p className="text-[11px] font-normal opacity-75">
-                Agent auto-registers itself. Zero copy-paste.
+                {t('servers.oneLinerDesc')}
               </p>
             </button>
             <button
@@ -292,10 +295,10 @@ function AddServerModal({ onClose, onSaved }) {
             >
               <div className="flex items-center justify-center gap-2 mb-1">
                 <span className="material-symbols-outlined">edit</span>
-                <span>Manual Entry</span>
+                <span>{t('servers.manualEntry')}</span>
               </div>
               <p className="text-[11px] font-normal opacity-75">
-                Paste API URL & Key from existing agent.
+                {t('servers.manualEntryDesc')}
               </p>
             </button>
           </div>
@@ -317,6 +320,7 @@ function AddServerModal({ onClose, onSaved }) {
    QUICK JOIN (NEW) — Token-based one-liner
    ============================================================ */
 function QuickJoinFlow({ onClose, onSaved }) {
+  const { t } = useI18n()
   // Sub-states:
   //  'form'      = user fills name & tags
   //  'waiting'   = command generated, polling for agent to join
@@ -343,7 +347,7 @@ function QuickJoinFlow({ onClose, onSaved }) {
       setTokenData(data)
       setStep('waiting')
     } catch (e2) {
-      setErr(e2.response?.data?.detail || 'Failed to create install token')
+      setErr(e2.response?.data?.detail || t('servers.createTokenFailed'))
     } finally { setBusy(false) }
   }
 
@@ -413,17 +417,17 @@ function QuickJoinFlow({ onClose, onSaved }) {
         <div className="bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-2">
             <span className="material-symbols-outlined text-primary">bolt</span>
-            <p className="text-sm font-semibold text-gray-800">How it works</p>
+            <p className="text-sm font-semibold text-gray-800">{t('servers.howItWorks')}</p>
           </div>
           <ol className="text-xs text-gray-600 space-y-1.5 ml-1 list-decimal list-inside">
-            <li>Pick a name for your new server below</li>
-            <li>Copy the one-liner command (next screen)</li>
-            <li>Paste it on the target server's terminal</li>
-            <li>Agent installs itself and auto-registers — server appears here</li>
+            <li>{t('servers.step1')}</li>
+            <li>{t('servers.step2')}</li>
+            <li>{t('servers.step3')}</li>
+            <li>{t('servers.step4')}</li>
           </ol>
         </div>
 
-        <FormField label="Operating System" required>
+        <FormField label={t('servers.os')} required>
           <div className="grid grid-cols-3 gap-2">
             {[
               { id: 'linux',   label: 'Linux',   icon: '🐧', desc: 'Ubuntu, Debian, Mint, etc.' },
@@ -450,7 +454,7 @@ function QuickJoinFlow({ onClose, onSaved }) {
           </div>
         </FormField>
 
-        <FormField label="Server name" required>
+        <FormField label={t('servers.serverName')} required>
           <input
             value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
@@ -462,10 +466,10 @@ function QuickJoinFlow({ onClose, onSaved }) {
             autoComplete="off"
             className="input"
           />
-          <p className="text-[11px] text-gray-400 mt-1">Must be unique. Use lowercase letters, digits, and dashes.</p>
+          <p className="text-[11px] text-gray-400 mt-1">{t('servers.serverNameHint')}</p>
         </FormField>
 
-        <FormField label="Tags (optional, comma-separated)">
+        <FormField label={t('servers.tagsOpt')}>
           <input
             value={form.tags}
             onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
@@ -477,12 +481,12 @@ function QuickJoinFlow({ onClose, onSaved }) {
         <div className="flex gap-2 pt-2">
           <button type="submit" disabled={busy} className="btn-primary flex-1 justify-center">
             {busy ? (
-              <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Generating…</>
+              <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />{t('servers.generating')}</>
             ) : (
-              <><span className="material-symbols-outlined text-lg">arrow_forward</span>Generate install command</>
+              <><span className="material-symbols-outlined text-lg">arrow_forward</span>{t('servers.generateCmd')}</>
             )}
           </button>
-          <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
+          <button type="button" onClick={onClose} className="btn-secondary">{t('servers.cancel')}</button>
         </div>
       </form>
     )
@@ -496,10 +500,10 @@ function QuickJoinFlow({ onClose, onSaved }) {
           <p className="text-xs text-blue-900 font-semibold mb-2 flex items-center gap-1.5">
             <span className="material-symbols-outlined text-base">terminal</span>
             {tokenData.os === 'windows'
-              ? <>Run this in <b>PowerShell as Administrator</b> on <b>{tokenData.name}</b></>
+              ? t('servers.runWin', { name: tokenData.name })
               : tokenData.os === 'macos'
-                ? <>Run this in <b>Terminal</b> on macOS host <b>{tokenData.name}</b></>
-                : <>Run this on the new Linux server&nbsp;<b>{tokenData.name}</b></>
+                ? t('servers.runMac', { name: tokenData.name })
+                : t('servers.runLinux', { name: tokenData.name })
             }
           </p>
           <div className="relative">
@@ -509,13 +513,13 @@ function QuickJoinFlow({ onClose, onSaved }) {
             <button
               onClick={copy}
               className="absolute top-2 right-2 bg-gray-800 hover:bg-gray-700 text-white p-2 rounded-md transition-colors"
-              title="Copy"
+              title={t('servers.copy')}
             >
               <span className="material-symbols-outlined text-base">{copied ? 'check' : 'content_copy'}</span>
             </button>
           </div>
           <p className="text-[11px] text-blue-700 mt-2">
-            Token expires in {fmtTime(secondsLeft)}. Server name reserved as <code className="bg-blue-100 px-1 rounded">{tokenData.name}</code>.
+            {t('servers.tokenExpires', { time: fmtTime(secondsLeft), name: tokenData.name })}
           </p>
         </div>
 
@@ -524,10 +528,10 @@ function QuickJoinFlow({ onClose, onSaved }) {
           <div className="inline-flex items-center justify-center w-14 h-14 bg-primary/10 rounded-full mb-3">
             <span className="w-8 h-8 border-3 border-primary/30 border-t-primary rounded-full animate-spin" />
           </div>
-          <p className="text-gray-800 font-medium text-sm">Waiting for the agent to register…</p>
-          <p className="text-gray-500 text-xs mt-1">This window auto-detects when the agent reports in.</p>
+          <p className="text-gray-800 font-medium text-sm">{t('servers.waitingTitle')}</p>
+          <p className="text-gray-500 text-xs mt-1">{t('servers.waitingDesc')}</p>
           {status?.status === 'expired' && (
-            <p className="text-danger text-xs mt-2 font-semibold">⚠ Token expired. Please generate a new one.</p>
+            <p className="text-danger text-xs mt-2 font-semibold">{t('servers.tokenExpired')}</p>
           )}
         </div>
 
@@ -537,9 +541,9 @@ function QuickJoinFlow({ onClose, onSaved }) {
             className="btn-secondary flex-1 justify-center"
           >
             <span className="material-symbols-outlined text-lg">refresh</span>
-            Generate new token
+            {t('servers.genNewToken')}
           </button>
-          <button onClick={onClose} className="btn-ghost">Close</button>
+          <button onClick={onClose} className="btn-ghost">{t('servers.close')}</button>
         </div>
       </div>
     )
@@ -552,9 +556,9 @@ function QuickJoinFlow({ onClose, onSaved }) {
         <span className="material-symbols-outlined text-success text-4xl filled">check_circle</span>
       </div>
       <div>
-        <p className="text-xl font-bold text-gray-900">Server connected!</p>
+        <p className="text-xl font-bold text-gray-900">{t('servers.connected')}</p>
         <p className="text-gray-500 text-sm mt-1">
-          <b>{status?.server_name || tokenData.name}</b> is now in your fleet.
+          {t('servers.connectedDesc', { name: status?.server_name || tokenData.name })}
         </p>
       </div>
       {status?.api_url && (
@@ -563,14 +567,14 @@ function QuickJoinFlow({ onClose, onSaved }) {
       <div className="flex gap-2 justify-center pt-2">
         <button onClick={onClose} className="btn-primary">
           <span className="material-symbols-outlined text-lg">done</span>
-          Got it
+          {t('servers.gotIt')}
         </button>
         <button
           onClick={() => { setStep('form'); setForm({ name: '', tags: '' }); setTokenData(null); setStatus(null) }}
           className="btn-secondary"
         >
           <span className="material-symbols-outlined text-lg">add</span>
-          Add another
+          {t('servers.addAnother')}
         </button>
       </div>
     </div>
@@ -582,6 +586,7 @@ function QuickJoinFlow({ onClose, onSaved }) {
    MANUAL ENTRY (legacy fallback) — Paste API URL + Key
    ============================================================ */
 function ManualEntryForm({ onClose, onSaved }) {
+  const { t } = useI18n()
   const [form, setForm] = useState({ name: '', hostname: '', api_url: '', tags: '', api_key: '' })
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
@@ -597,7 +602,7 @@ function ManualEntryForm({ onClose, onSaved }) {
       })
       onSaved(data)
     } catch (e2) {
-      setErr(e2.response?.data?.detail || 'Failed to register server')
+      setErr(e2.response?.data?.detail || t('servers.registerFailed'))
     } finally { setBusy(false) }
   }
 
@@ -606,19 +611,19 @@ function ManualEntryForm({ onClose, onSaved }) {
       {err && <p className="text-danger text-sm px-3 py-2 bg-danger-light border border-danger-border rounded-lg">{err}</p>}
 
       <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs text-gray-600">
-        Use this when the agent is already installed on the target server. Paste its API URL & Key from the installer output (or run <code className="bg-gray-200 px-1 rounded">sudo cat /etc/secureops-agent/key</code> to retrieve later).
+        {t('servers.manualHint', { cmd: '' })}<code className="bg-gray-200 px-1 rounded">sudo cat /etc/secureops-agent/key</code>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <FormField label="Server name" required>
+        <FormField label={t('servers.serverName')} required>
           <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} placeholder="web-prod-01" required className="input" />
         </FormField>
-        <FormField label="Hostname (display)">
-          <input value={form.hostname} onChange={e => setForm(f => ({ ...f, hostname: e.target.value }))} placeholder="(defaults to name)" className="input" />
+        <FormField label={t('servers.hostnameDisplay')}>
+          <input value={form.hostname} onChange={e => setForm(f => ({ ...f, hostname: e.target.value }))} placeholder={t('servers.hostnameDefault')} className="input" />
         </FormField>
       </div>
 
-      <FormField label="API URL" required>
+      <FormField label={t('servers.apiUrl')} required>
         <input
           value={form.api_url}
           onChange={e => setForm(f => ({ ...f, api_url: e.target.value }))}
@@ -630,13 +635,13 @@ function ManualEntryForm({ onClose, onSaved }) {
         />
       </FormField>
 
-      <FormField label="API Key" required>
+      <FormField label={t('servers.apiKey')} required>
         <div className="relative">
           <input
             type={showKey ? 'text' : 'password'}
             value={form.api_key}
             onChange={e => setForm(f => ({ ...f, api_key: e.target.value }))}
-            placeholder="43-char token from agent"
+            placeholder={t('servers.apiKeyPh')}
             required
             minLength={20}
             className="input font-mono text-xs pr-20"
@@ -658,11 +663,10 @@ function ManualEntryForm({ onClose, onSaved }) {
                     // HTTP context: focus field so user can paste manually
                     const el = document.querySelector('input[placeholder*="token"]')
                     el && el.focus()
-                    alert('Ketuk & tahan field lalu pilih "Paste" untuk menempel teks')
                   }
                 } catch { /* ignore */ }
               }}
-              className="text-gray-400 hover:text-primary p-1" title="Paste from clipboard"
+              className="text-gray-400 hover:text-primary p-1" title={t('servers.pasteClipboard')}
             >
               <span className="material-symbols-outlined text-base">content_paste</span>
             </button>
@@ -670,19 +674,19 @@ function ManualEntryForm({ onClose, onSaved }) {
         </div>
       </FormField>
 
-      <FormField label="Tags (optional, comma-separated)">
+      <FormField label={t('servers.tagsOpt')}>
         <input value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="production, web, db" className="input" />
       </FormField>
 
       <div className="flex gap-2 pt-2">
         <button type="submit" disabled={busy} className="btn-primary flex-1 justify-center">
           {busy ? (
-            <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Registering…</>
+            <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />{t('servers.registering')}</>
           ) : (
-            <><span className="material-symbols-outlined text-lg">add</span>Register & Connect</>
+            <><span className="material-symbols-outlined text-lg">add</span>{t('servers.registerConnect')}</>
           )}
         </button>
-        <button type="button" onClick={onClose} className="btn-secondary">Cancel</button>
+        <button type="button" onClick={onClose} className="btn-secondary">{t('servers.cancel')}</button>
       </div>
     </form>
   )
