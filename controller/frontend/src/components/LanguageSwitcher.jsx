@@ -26,7 +26,7 @@ export default function LanguageSwitcher() {
         <span className="material-symbols-outlined text-xl">translate</span>
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-lg overflow-hidden z-30">
+        <div className="absolute right-0 top-full mt-2 w-52 bg-white border border-gray-100 rounded-xl shadow-lg overflow-y-auto max-h-[70vh] z-30">
           {languages.map(l => (
             <button
               key={l.code}

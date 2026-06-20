@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useI18n } from '../i18n'
 
 export default function Login() {
+  const { t } = useI18n()
   const { login } = useAuth()
   const navigate = useNavigate()
   const [form, setForm] = useState({ username: '', password: '' })
@@ -18,7 +20,7 @@ export default function Login() {
       await login(form.username, form.password)
       navigate('/dashboard')
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid username or password.')
+      setError(err.response?.data?.detail || t('login.invalid'))
     } finally {
       setLoading(false)
     }
@@ -47,7 +49,7 @@ export default function Login() {
               </div>
             </div>
             <h1 className="text-ink text-2xl font-bold tracking-tightest">SecureOps</h1>
-            <p className="text-ink-muted text-sm mt-1">State Polytechnic of Sriwijaya</p>
+            <p className="text-ink-muted text-sm mt-1">{t('login.subtitle')}</p>
           </div>
 
           {/* Form */}
@@ -62,14 +64,14 @@ export default function Login() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Username */}
               <div>
-                <label className="text-gray-700 text-sm font-medium mb-1.5 block">Username / Email</label>
+                <label className="text-gray-700 text-sm font-medium mb-1.5 block">{t('login.usernameLabel')}</label>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xl">person</span>
                   <input
                     type="text"
                     value={form.username}
                     onChange={e => setForm(p => ({ ...p, username: e.target.value }))}
-                    placeholder="superadmin atau email@domain"
+                    placeholder={t('login.usernamePlaceholder')}
                     autoComplete="username"
                     spellCheck="false"
                     autoCapitalize="off"
@@ -82,8 +84,8 @@ export default function Login() {
               {/* Password */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-gray-700 text-sm font-medium">Linux Password</label>
-                  <span className="text-gray-400 text-xs">Use `passwd` on server</span>
+                  <label className="text-gray-700 text-sm font-medium">{t('login.passwordLabel')}</label>
+                  <span className="text-gray-400 text-xs">{t('login.passwdHint')}</span>
                 </div>
                 <div className="relative">
                   <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xl">key</span>
@@ -91,7 +93,7 @@ export default function Login() {
                     type={showPw ? 'text' : 'password'}
                     value={form.password}
                     onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
-                    placeholder="Your OS account password"
+                    placeholder={t('login.passwordPlaceholder')}
                     autoComplete="current-password"
                     required
                     className="input pl-11 pr-11"
@@ -117,7 +119,7 @@ export default function Login() {
                   <span className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                 ) : (
                   <>
-                    Sign In
+                    {t('login.signIn')}
                     <span className="material-symbols-outlined text-xl">arrow_forward</span>
                   </>
                 )}
@@ -127,12 +129,12 @@ export default function Login() {
             {/* Footer */}
             <div className="flex items-center justify-center gap-2 mt-8 text-gray-400 text-xs font-medium uppercase tracking-wide">
               <span className="material-symbols-outlined text-sm">verified_user</span>
-              Authenticated via Linux PAM
+              {t('login.pamFooter')}
             </div>
 
             <p className="text-center text-gray-300 text-[11px] mt-3 leading-relaxed">
-              Sign in with your real OS account.<br/>
-              <span className="text-gray-400">sudo / wheel members → admin role</span>
+              {t('login.osHint')}<br/>
+              <span className="text-gray-400">{t('login.adminHint')}</span>
             </p>
           </div>
         </div>

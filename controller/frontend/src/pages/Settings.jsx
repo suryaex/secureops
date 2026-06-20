@@ -38,8 +38,8 @@ export default function Settings() {
           <span className="material-symbols-outlined text-primary">translate</span>
           {t('settings.language')}
         </h3>
-        <p className="text-gray-500 text-xs mb-4">{t('settings.languageDesc')}</p>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <p className="text-gray-500 text-xs mb-4">{t('settings.languageDesc')} · {languages.length}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-80 overflow-y-auto pr-1">
           {languages.map(l => (
             <button
               key={l.code}

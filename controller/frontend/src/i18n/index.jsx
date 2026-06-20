@@ -1,14 +1,15 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { translations, LANGUAGES, DEFAULT_LANG } from './locales'
+import { translations, DEFAULT_LANG } from './locales'
+import { LANGUAGES, RTL_LANGS } from './languages'
 
 const STORAGE_KEY = 'so_lang'
 const I18nContext = createContext(null)
 
 function detectInitial() {
   const saved = localStorage.getItem(STORAGE_KEY)
-  if (saved && translations[saved]) return saved
+  if (saved && LANGUAGES.some(l => l.code === saved)) return saved
   const browser = (navigator.language || DEFAULT_LANG).slice(0, 2)
-  return translations[browser] ? browser : DEFAULT_LANG
+  return LANGUAGES.some(l => l.code === browser) ? browser : DEFAULT_LANG
 }
 
 // Ambil nilai bersarang via key bertitik, mis. "top.group.logs".
@@ -22,17 +23,19 @@ export function I18nProvider({ children }) {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, lang)
     document.documentElement.lang = lang
+    document.documentElement.dir = RTL_LANGS.has(lang) ? 'rtl' : 'ltr'
   }, [lang])
 
   const setLang = useCallback((next) => {
-    if (translations[next]) setLangState(next)
+    if (LANGUAGES.some(l => l.code === next)) setLangState(next)
   }, [])
 
-  // t('nav.dashboard') atau t('top.noResults', { q: 'foo' })
+  // t('nav.dashboard') atau t('top.noResults', { q: 'foo' }).
+  // Bahasa tanpa kamus (atau key yang belum diterjemahkan) jatuh ke Inggris.
   const t = useCallback((key, vars) => {
     let str = lookup(translations[lang], key)
-    if (str == null) str = lookup(translations[DEFAULT_LANG], key) // fallback bahasa default
-    if (str == null) return key                                    // fallback terakhir: key mentah
+    if (str == null) str = lookup(translations[DEFAULT_LANG], key)
+    if (str == null) return key
     if (vars) {
       for (const [k, v] of Object.entries(vars)) {
         str = str.replaceAll(`{${k}}`, String(v))

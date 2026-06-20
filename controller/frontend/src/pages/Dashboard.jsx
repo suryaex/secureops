@@ -5,6 +5,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
 } from 'recharts'
 import api from '../api/client'
+import { useI18n } from '../i18n'
 
 const SEV_COLORS = { Critical: '#DC2626', High: '#D97706', Medium: '#EAB308', Low: '#2563EB' }
 
@@ -83,6 +84,7 @@ function ActivityRow({ log, idx }) {
 }
 
 export default function Dashboard() {
+  const { t } = useI18n()
   const [stats, setStats] = useState(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
@@ -107,7 +109,7 @@ export default function Dashboard() {
       // Bersihkan setelah tab sempat memuat
       setTimeout(() => window.URL.revokeObjectURL(url), 60000)
     } catch (err) {
-      alert('Gagal membuat laporan: ' + (err.response?.data?.detail || err.message))
+      alert(t('dash.reportFail', { msg: err.response?.data?.detail || err.message }))
     } finally {
       setDownloading(false)
     }
@@ -130,22 +132,22 @@ export default function Dashboard() {
       {/* Page header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">System Overview</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('dash.title')}</h1>
           <p className="text-gray-500 text-sm mt-0.5 flex items-center gap-1.5">
             <span className="material-symbols-outlined text-base text-primary">sync</span>
-            Last updated: Just now
+            {t('dash.lastUpdated')}
           </p>
         </div>
         <button onClick={downloadReport} disabled={downloading} className="btn-secondary shrink-0">
           {downloading ? (
             <>
               <span className="w-4 h-4 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
-              <span className="hidden sm:inline">Generating…</span>
+              <span className="hidden sm:inline">{t('common.generating')}</span>
             </>
           ) : (
             <>
               <span className="material-symbols-outlined text-lg">description</span>
-              <span className="hidden sm:inline">Lihat Laporan</span>
+              <span className="hidden sm:inline">{t('dash.report')}</span>
             </>
           )}
         </button>
@@ -155,25 +157,25 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           icon="folder_open" iconColor="bg-blue-50 text-blue-500"
-          label="Total Sudo Files" value={stats?.total_risky_files ?? 0}
-          badge={`Critical: ${stats?.critical_files ?? 0}`}
+          label={t('dash.totalSudoFiles')} value={stats?.total_risky_files ?? 0}
+          badge={t('dash.criticalN', { n: stats?.critical_files ?? 0 })}
         />
         <StatCard
           icon="manage_accounts" iconColor="bg-teal-50 text-teal-500"
-          label="Sudo Users" value={stats?.sudo_users_count ?? 0}
-          sub="active"
+          label={t('dash.sudoUsers')} value={stats?.sudo_users_count ?? 0}
+          sub={t('common.active')}
         />
         <StatCard
           icon="verified_user" iconColor="bg-green-50 text-green-500"
-          label="Integrity Status"
+          label={t('dash.integrityStatus')}
           value={stats?.integrity_status ?? '—'}
           valueColor={stats?.integrity_status === 'Secure' ? 'text-success' : 'text-danger'}
         />
         <StatCard
           icon="notifications_active" iconColor="bg-orange-50 text-orange-500"
-          label="New Alerts" value={stats?.new_alerts ?? 0}
+          label={t('dash.newAlerts')} value={stats?.new_alerts ?? 0}
           valueColor={stats?.new_alerts > 0 ? 'text-warning' : 'text-gray-900'}
-          sub={stats?.new_alerts > 0 ? 'action needed' : 'all clear'}
+          sub={stats?.new_alerts > 0 ? t('dash.actionNeeded') : t('dash.allClear')}
           subColor={stats?.new_alerts > 0 ? 'text-warning' : 'text-success'}
         />
       </div>
@@ -182,7 +184,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
         {/* Donut chart */}
         <div className="card p-5 lg:col-span-2">
-          <h2 className="text-gray-800 font-semibold text-base mb-4">Severity Level Distribution</h2>
+          <h2 className="text-gray-800 font-semibold text-base mb-4">{t('dash.severityDist')}</h2>
           {pieData.length > 0 ? (
             <ResponsiveContainer width="100%" height={230}>
               <PieChart>
@@ -203,7 +205,7 @@ export default function Dashboard() {
                 </text>
                 <text x="50%" y="57%" textAnchor="middle" dominantBaseline="middle"
                   style={{ fontSize: 10, fill: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  Total Issues
+                  {t('dash.totalIssues')}
                 </text>
                 <Tooltip
                   formatter={(v, n) => [`${v}%`, n]}
@@ -212,13 +214,13 @@ export default function Dashboard() {
                 <Legend
                   iconType="circle"
                   iconSize={8}
-                  formatter={v => <span style={{ color: '#6B7280', fontSize: 12 }}>{v}</span>}
+                  formatter={v => <span style={{ color: '#6B7280', fontSize: 12 }}>{t(`sev.${String(v).toLowerCase()}`)}</span>}
                 />
               </PieChart>
             </ResponsiveContainer>
           ) : (
             <div className="h-52 flex items-center justify-center text-gray-400 text-sm">
-              No scan data — run a scan first
+              {t('dash.noScanData')}
             </div>
           )}
         </div>
@@ -226,10 +228,10 @@ export default function Dashboard() {
         {/* Bar chart */}
         <div className="card p-5 lg:col-span-3">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-gray-800 font-semibold text-base">System Scan Activity (24 Hours)</h2>
+            <h2 className="text-gray-800 font-semibold text-base">{t('dash.scanActivity')}</h2>
             <div className="flex gap-1">
-              <button className="px-3 py-1 text-xs font-semibold bg-primary text-white rounded-lg">Today</button>
-              <button className="px-3 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 rounded-lg transition-colors">7 Days</button>
+              <button className="px-3 py-1 text-xs font-semibold bg-primary text-white rounded-lg">{t('common.today')}</button>
+              <button className="px-3 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 rounded-lg transition-colors">{t('common.days7')}</button>
             </div>
           </div>
           <ResponsiveContainer width="100%" height={185}>
@@ -241,7 +243,7 @@ export default function Dashboard() {
                 cursor={{ fill: '#F1F5F9' }}
                 contentStyle={{ borderRadius: 10, fontSize: 12, border: '1px solid #E5E7EB' }}
               />
-              <Bar dataKey="v" name="Scans" radius={[6, 6, 0, 0]}
+              <Bar dataKey="v" name={t('dash.scans')} radius={[6, 6, 0, 0]}
                 fill="#93C5FD"
                 label={false}
               >
@@ -261,16 +263,16 @@ export default function Dashboard() {
       {/* Recent activity */}
       <div className="card overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
-          <h2 className="text-gray-800 font-semibold">Recent Activity</h2>
+          <h2 className="text-gray-800 font-semibold">{t('dash.recentActivity')}</h2>
           <Link to="/activity-logs" className="text-primary text-sm font-medium hover:underline flex items-center gap-1">
-            View All Logs
+            {t('dash.viewAllLogs')}
             <span className="material-symbols-outlined text-base">arrow_forward</span>
           </Link>
         </div>
         <table className="data-table">
           <thead>
             <tr>
-              {['Admin', 'Action', 'Time', 'IP Address'].map(h => (
+              {[t('dash.colAdmin'), t('dash.colAction'), t('dash.colTime'), t('dash.colIp')].map(h => (
                 <th key={h}>{h}</th>
               ))}
             </tr>
@@ -281,7 +283,7 @@ export default function Dashboard() {
             ) : (
               <tr>
                 <td colSpan={4} className="text-center py-10 text-gray-400">
-                  No activity yet — login and run scans to populate
+                  {t('dash.noActivity')}
                 </td>
               </tr>
             )}
