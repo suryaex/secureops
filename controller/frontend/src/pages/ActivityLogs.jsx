@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client'
+import { useI18n } from '../i18n'
 
 const AVATAR_COLORS = ['bg-blue-500','bg-emerald-500','bg-violet-500','bg-orange-500','bg-pink-500','bg-cyan-500']
 
@@ -12,7 +13,15 @@ const ACTION_TAGS = {
   'Add Monitored File':  'bg-green-50 text-green-700 border-green-200',
 }
 
+// Pemetaan nilai aksi (dari API, bahasa Inggris) ke kunci i18n.
+const ACTION_KEY = {
+  'Login': 'login', 'Login Failed': 'loginFailed', 'Permission Scan': 'permissionScan',
+  'Sudo Scan': 'sudoScan', 'File Integrity Scan': 'fileIntegrityScan', 'Add Monitored File': 'addMonitoredFile',
+}
+
 export default function ActivityLogs() {
+  const { t } = useI18n()
+  const tAction = (a) => ACTION_KEY[a] ? t(`logs.action.${ACTION_KEY[a]}`) : a
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -51,8 +60,8 @@ export default function ActivityLogs() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Admin Activity Logs</h1>
-        <p className="text-gray-500 text-sm mt-0.5">Complete audit trail of all administrative actions</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('logs.title')}</h1>
+        <p className="text-gray-500 text-sm mt-0.5">{t('logs.subtitle')}</p>
       </div>
 
       {/* Filters */}
@@ -61,7 +70,7 @@ export default function ActivityLogs() {
           <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">search</span>
           <input
             type="text"
-            placeholder="Search admin…"
+            placeholder={t('logs.searchAdmin')}
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(0) }}
             className="input pl-10"
@@ -72,22 +81,22 @@ export default function ActivityLogs() {
           onChange={e => { setActionFilter(e.target.value); setPage(0) }}
           className="input w-auto"
         >
-          <option value="">All Actions</option>
-          <option value="Login">Login</option>
-          <option value="Login Failed">Login Failed</option>
-          <option value="Permission Scan">Permission Scan</option>
-          <option value="Sudo Scan">Sudo Scan</option>
-          <option value="File Integrity Scan">File Integrity Scan</option>
-          <option value="Add Monitored File">Add Monitored File</option>
+          <option value="">{t('logs.allActions')}</option>
+          <option value="Login">{t('logs.action.login')}</option>
+          <option value="Login Failed">{t('logs.action.loginFailed')}</option>
+          <option value="Permission Scan">{t('logs.action.permissionScan')}</option>
+          <option value="Sudo Scan">{t('logs.action.sudoScan')}</option>
+          <option value="File Integrity Scan">{t('logs.action.fileIntegrityScan')}</option>
+          <option value="Add Monitored File">{t('logs.action.addMonitoredFile')}</option>
         </select>
         <select
           value={statusFilter}
           onChange={e => { setStatusFilter(e.target.value); setPage(0) }}
           className="input w-auto"
         >
-          <option value="">All Status</option>
-          <option value="success">Success</option>
-          <option value="failed">Failed</option>
+          <option value="">{t('logs.allStatus')}</option>
+          <option value="success">{t('common.success')}</option>
+          <option value="failed">{t('common.failed')}</option>
         </select>
         {(search || actionFilter || statusFilter) && (
           <button
@@ -95,7 +104,7 @@ export default function ActivityLogs() {
             className="btn-ghost text-xs"
           >
             <span className="material-symbols-outlined text-base">filter_alt_off</span>
-            Clear
+            {t('logs.clear')}
           </button>
         )}
       </div>
@@ -106,7 +115,7 @@ export default function ActivityLogs() {
           <table className="data-table">
             <thead>
               <tr>
-                {['Admin', 'Action', 'Details', 'IP Address', 'Time', 'Status'].map(h => (
+                {[t('dash.colAdmin'), t('dash.colAction'), t('logs.colDetails'), t('dash.colIp'), t('dash.colTime'), t('common.status')].map(h => (
                   <th key={h}>{h}</th>
                 ))}
               </tr>
@@ -118,7 +127,7 @@ export default function ActivityLogs() {
                 </td></tr>
               ) : logs.length === 0 ? (
                 <tr><td colSpan={6} className="text-center py-12 text-gray-400 text-sm">
-                  No activity logs found
+                  {t('logs.noLogs')}
                 </td></tr>
               ) : logs.map((log, i) => (
                 <tr key={log.id}>
@@ -132,14 +141,14 @@ export default function ActivityLogs() {
                   </td>
                   <td>
                     <span className={`action-tag border ${ACTION_TAGS[log.action] || 'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                      {log.action}
+                      {tAction(log.action)}
                     </span>
                   </td>
                   <td className="text-gray-500 text-xs max-w-xs truncate">{log.details || '—'}</td>
                   <td className="font-mono text-gray-500 text-xs">{log.ip_address}</td>
                   <td className="text-gray-400 text-xs whitespace-nowrap">{timeAgo(log.timestamp)}</td>
                   <td>
-                    <span className={`badge-${log.status}`}>{log.status}</span>
+                    <span className={`badge-${log.status}`}>{t(`common.${log.status}`)}</span>
                   </td>
                 </tr>
               ))}
@@ -150,19 +159,19 @@ export default function ActivityLogs() {
         {/* Pagination */}
         <div className="px-4 py-3 border-t border-gray-50 flex items-center justify-between">
           <p className="text-gray-400 text-xs">
-            Showing {page * PER_PAGE + 1}–{page * PER_PAGE + logs.length} results
+            {t('logs.showing', { from: page * PER_PAGE + 1, to: page * PER_PAGE + logs.length })}
           </p>
           <div className="flex gap-2">
             <button
               onClick={() => setPage(p => Math.max(0, p - 1))}
               disabled={page === 0}
               className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 text-xs font-medium disabled:opacity-40 hover:bg-gray-50 transition-colors"
-            >← Prev</button>
+            >← {t('common.prev')}</button>
             <button
               onClick={() => setPage(p => p + 1)}
               disabled={logs.length < PER_PAGE}
               className="px-3 py-1.5 rounded-lg border border-gray-200 text-gray-600 text-xs font-medium disabled:opacity-40 hover:bg-gray-50 transition-colors"
-            >Next →</button>
+            >{t('common.next')} →</button>
           </div>
         </div>
       </div>

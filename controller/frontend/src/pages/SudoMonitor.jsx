@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client'
+import { useI18n } from '../i18n'
 
 const AVATAR_COLORS = ['bg-blue-500','bg-emerald-500','bg-violet-500','bg-orange-500','bg-pink-500']
 
 const STATUS_BADGE = { active: 'badge-active', idle: 'badge-idle', locked: 'badge-locked' }
 
 export default function SudoMonitor() {
+  const { t } = useI18n()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [scanning, setScanning] = useState(false)
@@ -39,19 +41,19 @@ export default function SudoMonitor() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-xl md:text-2xl font-bold text-gray-900">Sudo Privilege Monitor</h1>
+            <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('sudo.title')}</h1>
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-success-light text-success border border-success-border">
               <span className="w-1.5 h-1.5 rounded-full bg-success animate-pulse block" />
-              Sudoers: Intact
+              {t('sudo.sudoersIntact')}
             </span>
           </div>
-          <p className="text-gray-500 text-sm mt-0.5">Monitor users with elevated privileges</p>
+          <p className="text-gray-500 text-sm mt-0.5">{t('sudo.subtitle')}</p>
         </div>
         <button onClick={runScan} disabled={scanning} className="btn-primary">
           {scanning ? (
-            <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Scanning…</>
+            <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />{t('common.scanning')}</>
           ) : (
-            <><span className="material-symbols-outlined text-xl">manage_search</span>Scan Sudoers</>
+            <><span className="material-symbols-outlined text-xl">manage_search</span>{t('sudo.scanSudoers')}</>
           )}
         </button>
       </div>
@@ -59,7 +61,7 @@ export default function SudoMonitor() {
       {result && (
         <div className="card p-4 flex items-center gap-3 border-l-4 border-success">
           <span className="material-symbols-outlined text-success text-xl" style={{fontVariationSettings:"'FILL' 1"}}>check_circle</span>
-          <p className="text-gray-700 text-sm">{result.issues_found} privileged users found in {result.duration_seconds}s</p>
+          <p className="text-gray-700 text-sm">{t('sudo.scanResult', { n: result.issues_found, sec: result.duration_seconds })}</p>
         </div>
       )}
 
@@ -68,7 +70,7 @@ export default function SudoMonitor() {
         <div className="card p-5 border-l-4 border-danger">
           <div className="flex items-center gap-2 mb-3">
             <span className="material-symbols-outlined text-danger text-xl" style={{fontVariationSettings:"'FILL' 1"}}>gpp_bad</span>
-            <p className="text-gray-800 font-semibold">Escalation Alerts ({locked.length})</p>
+            <p className="text-gray-800 font-semibold">{t('sudo.escalation', { n: locked.length })}</p>
           </div>
           <div className="space-y-2">
             {locked.map(u => (
@@ -76,9 +78,9 @@ export default function SudoMonitor() {
                 <span className="material-symbols-outlined text-danger text-base">warning</span>
                 <div>
                   <p className="text-gray-800 text-sm font-medium">
-                    {u.username} — <span className="text-danger">Locked Account</span>
+                    {u.username} — <span className="text-danger">{t('sudo.lockedAccount')}</span>
                   </p>
-                  <p className="text-gray-500 text-xs">{u.failed_attempts} failed attempts · {u.action}</p>
+                  <p className="text-gray-500 text-xs">{t('sudo.failedAttemptsAction', { n: u.failed_attempts, action: u.action })}</p>
                 </div>
               </div>
             ))}
@@ -89,9 +91,9 @@ export default function SudoMonitor() {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4">
         {[
-          { label: 'Total Users',   value: users.length,  icon: 'group',        color: 'text-gray-900', bg: 'bg-blue-50 text-blue-500' },
-          { label: 'Active',        value: active.length, icon: 'check_circle', color: 'text-success',  bg: 'bg-success-light text-success' },
-          { label: 'Locked',        value: locked.length, icon: 'lock',         color: locked.length > 0 ? 'text-danger' : 'text-gray-900', bg: locked.length > 0 ? 'bg-danger-light text-danger' : 'bg-gray-50 text-gray-400' },
+          { label: t('sudo.statTotal'),  value: users.length,  icon: 'group',        color: 'text-gray-900', bg: 'bg-blue-50 text-blue-500' },
+          { label: t('sudo.statActive'), value: active.length, icon: 'check_circle', color: 'text-success',  bg: 'bg-success-light text-success' },
+          { label: t('sudo.statLocked'), value: locked.length, icon: 'lock',         color: locked.length > 0 ? 'text-danger' : 'text-gray-900', bg: locked.length > 0 ? 'bg-danger-light text-danger' : 'bg-gray-50 text-gray-400' },
         ].map(({ label, value, icon, color, bg }) => (
           <div key={label} className="stat-card">
             <div className="flex items-center justify-between">
@@ -108,13 +110,13 @@ export default function SudoMonitor() {
       {/* Table */}
       <div className="card overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-50">
-          <h3 className="text-gray-800 font-semibold">Privileged Users</h3>
+          <h3 className="text-gray-800 font-semibold">{t('sudo.privUsers')}</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
-                {['User', 'Groups', 'Last Access', 'Failed Attempts', 'Last Action', 'Status'].map(h => (
+                {[t('sudo.colUser'), t('sudo.colGroups'), t('sudo.colLastAccess'), t('sudo.colFailed'), t('sudo.colLastAction'), t('common.status')].map(h => (
                   <th key={h}>{h}</th>
                 ))}
               </tr>
@@ -126,7 +128,7 @@ export default function SudoMonitor() {
                 </td></tr>
               ) : users.length === 0 ? (
                 <tr><td colSpan={6} className="text-center py-12 text-gray-400 text-sm">
-                  No sudo users found. Click "Scan Sudoers" to begin.
+                  {t('sudo.noUsers')}
                 </td></tr>
               ) : users.map((u, i) => (
                 <tr key={u.id}>
@@ -154,7 +156,7 @@ export default function SudoMonitor() {
                     </span>
                   </td>
                   <td className="font-mono text-xs text-gray-500 max-w-xs truncate">{u.action || '—'}</td>
-                  <td><span className={STATUS_BADGE[u.status] || 'badge'}>{u.status}</span></td>
+                  <td><span className={STATUS_BADGE[u.status] || 'badge'}>{t(`sudo.status_${u.status}`)}</span></td>
                 </tr>
               ))}
             </tbody>

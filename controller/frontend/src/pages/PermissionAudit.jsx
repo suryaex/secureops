@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import api from '../api/client'
+import { useI18n } from '../i18n'
 
 const SEVERITIES = ['All', 'Critical', 'High', 'Medium', 'Low']
 
@@ -18,6 +19,7 @@ const SEV_STAT = {
 }
 
 export default function PermissionAudit() {
+  const { t } = useI18n()
   const [logs, setLogs] = useState([])
   const [filter, setFilter] = useState('All')
   const [loading, setLoading] = useState(true)
@@ -53,14 +55,14 @@ export default function PermissionAudit() {
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-gray-900">Permission Audit</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Scan filesystem for dangerous file permissions</p>
+          <h1 className="text-xl md:text-2xl font-bold text-gray-900">{t('audit.title')}</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{t('audit.subtitle')}</p>
         </div>
         <button onClick={runScan} disabled={scanning} className="btn-primary shrink-0">
           {scanning ? (
-            <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />Scanning…</>
+            <><span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />{t('audit.scanning')}</>
           ) : (
-            <><span className="material-symbols-outlined text-xl">search</span>Start Scan</>
+            <><span className="material-symbols-outlined text-xl">search</span>{t('audit.startScan')}</>
           )}
         </button>
       </div>
@@ -70,8 +72,8 @@ export default function PermissionAudit() {
         <div className="card p-4 flex items-center gap-3 border-l-4 border-success">
           <span className="material-symbols-outlined text-success text-2xl" style={{fontVariationSettings:"'FILL' 1"}}>check_circle</span>
           <div>
-            <p className="text-gray-800 font-semibold text-sm">Scan Complete</p>
-            <p className="text-gray-500 text-xs">{result.total_scanned.toLocaleString()} paths scanned · {result.issues_found} issues found · {result.duration_seconds}s</p>
+            <p className="text-gray-800 font-semibold text-sm">{t('audit.scanComplete')}</p>
+            <p className="text-gray-500 text-xs">{t('audit.scanStats', { scanned: result.total_scanned.toLocaleString(), issues: result.issues_found, sec: result.duration_seconds })}</p>
           </div>
         </div>
       )}
@@ -79,9 +81,9 @@ export default function PermissionAudit() {
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { label: 'Total Issues', value: logs.length, icon: 'folder_open', color: 'text-gray-900', bg: 'bg-blue-50 text-blue-500', border: '' },
+          { label: t('audit.totalIssues'), value: logs.length, icon: 'folder_open', color: 'text-gray-900', bg: 'bg-blue-50 text-blue-500', border: '' },
           ...['Critical', 'High', 'Medium'].map(s => ({
-            label: s, value: countBySev(s), icon: SEV_STAT[s].icon,
+            label: t(`sev.${s.toLowerCase()}`), value: countBySev(s), icon: SEV_STAT[s].icon,
             color: SEV_STAT[s].color, bg: `${SEV_STAT[s].bg} ${SEV_STAT[s].color}`, border: SEV_STAT[s].border
           }))
         ].map(({ label, value, icon, color, bg, border }) => (
@@ -109,7 +111,7 @@ export default function PermissionAudit() {
                 : 'bg-white text-gray-500 border border-gray-200 hover:border-primary hover:text-primary'
             }`}
           >
-            {s}
+            {s === 'All' ? t('common.all') : t(`sev.${s.toLowerCase()}`)}
             {s !== 'All' && (
               <span className="ml-1.5 text-xs opacity-70">({countBySev(s)})</span>
             )}
@@ -123,7 +125,7 @@ export default function PermissionAudit() {
           <table className="data-table">
             <thead>
               <tr>
-                {['File Path', 'Issue Type', 'Permission', 'Severity', 'Detected', 'Scanned By'].map(h => (
+                {[t('audit.colFilePath'), t('audit.colIssueType'), t('audit.colPermission'), t('audit.colSeverity'), t('audit.colDetected'), t('audit.colScannedBy')].map(h => (
                   <th key={h}>{h}</th>
                 ))}
               </tr>
@@ -135,14 +137,14 @@ export default function PermissionAudit() {
                 </td></tr>
               ) : logs.length === 0 ? (
                 <tr><td colSpan={6} className="text-center py-12 text-gray-400 text-sm">
-                  No issues found. Click "Start Scan" to begin.
+                  {t('audit.noIssues')}
                 </td></tr>
               ) : logs.map(log => (
                 <tr key={log.id}>
                   <td className="font-mono text-xs text-gray-600 max-w-xs truncate">{log.file_path}</td>
                   <td className="text-gray-700">{log.issue_type}</td>
                   <td className="font-mono text-primary text-xs">{log.permission_value}</td>
-                  <td><span className={SEV_BADGE[log.severity] || 'badge'}>{log.severity}</span></td>
+                  <td><span className={SEV_BADGE[log.severity] || 'badge'}>{t(`sev.${String(log.severity).toLowerCase()}`)}</span></td>
                   <td className="text-gray-400 text-xs whitespace-nowrap">
                     {log.detected_at ? new Date(log.detected_at).toLocaleString('id-ID') : '—'}
                   </td>
