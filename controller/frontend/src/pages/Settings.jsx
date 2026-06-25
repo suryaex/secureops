@@ -138,6 +138,8 @@ export default function Settings() {
         </div>
       )}
 
+      <UpdateCard isAdmin={user?.role === 'admin'} />
+
       <div className="card p-5">
         <h3 className="text-gray-800 font-semibold mb-4 flex items-center gap-2">
           <span className="material-symbols-outlined text-primary">info</span>
@@ -198,3 +200,93 @@ const Toggle = ({ label, checked, onChange }) => (
     </button>
   </label>
 )
+
+// Software-update card: checks GitHub for a newer SecureOps release and lets an
+// admin apply it (pull + rebuild + restart) straight from the dashboard.
+const UpdateCard = ({ isAdmin }) => {
+  const [info, setInfo] = useState(null)
+  const [status, setStatus] = useState(null)
+  const [busy, setBusy] = useState(false)
+
+  const check = async () => {
+    setBusy(true)
+    try {
+      const { data } = await api.get('/update/check')
+      setInfo(data)
+    } catch {
+      setInfo({ current: '?', latest: null, update_available: false, error: 'Could not reach the controller.' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  useEffect(() => { check() }, [])
+
+  const apply = async () => {
+    setBusy(true)
+    try {
+      const { data } = await api.post('/update/apply')
+      setStatus(data)
+      const poll = setInterval(async () => {
+        try {
+          const { data: s } = await api.get('/update/status')
+          setStatus(s)
+          if (['done', 'error', 'up-to-date'].includes(s.state)) {
+            clearInterval(poll)
+            if (s.state === 'done') setTimeout(() => window.location.reload(), 2000)
+          }
+        } catch {
+          setStatus({ state: 'restarting', message: 'Controller is restarting…' })
+        }
+      }, 3000)
+    } catch (e) {
+      setStatus({ state: 'error', message: e?.response?.data?.detail || 'Apply failed.' })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="card p-5">
+      <h3 className="text-gray-800 font-semibold mb-1 flex items-center gap-2">
+        <span className="material-symbols-outlined text-primary">system_update</span>
+        Software update
+      </h3>
+      <p className="text-gray-500 text-xs mb-4">
+        {info?.update_available
+          ? `New version available: v${info.latest}`
+          : info?.error ? info.error : "You're up to date."}
+      </p>
+
+      <div className="grid grid-cols-2 gap-4 text-sm">
+        <Field label="Current" value={info ? `v${info.current}` : '…'} mono />
+        <Field label="Latest" value={info?.latest ? `v${info.latest}` : (info?.error ? '—' : '…')} mono />
+      </div>
+
+      {info?.update_available && info?.notes && (
+        <pre className="mt-3 max-h-32 overflow-auto whitespace-pre-wrap rounded-lg bg-gray-50 p-3 text-xs text-gray-600">{info.notes}</pre>
+      )}
+
+      <div className="mt-4 flex items-center gap-3">
+        <button onClick={check} disabled={busy} className="btn-secondary">
+          <span className="material-symbols-outlined text-lg">refresh</span>Check
+        </button>
+        {info?.update_available && isAdmin && (
+          <button onClick={apply} disabled={busy} className="btn-primary">
+            <span className="material-symbols-outlined text-lg">download</span>Update &amp; restart
+          </button>
+        )}
+        {info?.update_available && !isAdmin && (
+          <span className="text-gray-400 text-xs">Admin role required to apply updates.</span>
+        )}
+      </div>
+
+      {status && (
+        <p className="mt-3 border-t border-gray-100 pt-3 text-xs text-gray-600">
+          <span className="font-medium capitalize">{status.state}</span>
+          {status.message ? ` — ${status.message}` : ''}
+        </p>
+      )}
+    </div>
+  )
+}

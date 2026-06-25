@@ -19,6 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, SessionLocal
 import models
+from appversion import APP_VERSION
 from auth import hash_password, AGENT_MODE
 from routers import (
     auth,
@@ -32,6 +33,7 @@ from routers import (
     users,
     servers,
     terminal,
+    update,
 )
 
 models.Base.metadata.create_all(bind=engine)
@@ -56,7 +58,7 @@ if not AGENT_MODE:
 
 app = FastAPI(
     title="SecureOps API" + (" — AGENT" if AGENT_MODE else ""),
-    version="1.2.0",
+    version=APP_VERSION,
     description="State Polytechnic of Sriwijaya — Security Audit Dashboard API",
 )
 
@@ -122,6 +124,7 @@ if not AGENT_MODE:
     app.include_router(users.router,  prefix="/api/users", tags=["Users"])
     app.include_router(servers.router, prefix="/api/servers", tags=["Servers"])
     app.include_router(terminal.router, prefix="/api/terminal", tags=["Terminal"])
+    app.include_router(update.router, prefix="/api/update", tags=["Update"])
     # LogSync extension — ARM/MCU/appliance log ingest + StorageHub backup
     try:
         from extensions.logsync.router import router as logsync_router
