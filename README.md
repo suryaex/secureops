@@ -56,6 +56,12 @@ Pengembang: **Muhammad Surya Ragasin**
 Ada **dua cara**: **Docker** (paling ringkas, semua dependensi di dalam image) atau
 **Native** (systemd + nginx, mendukung login PAM penuh). Pilih salah satu.
 
+### Prasyarat
+- **Git** + **Docker & Docker Compose** (Docker untuk cara **A**; installer Linux bisa auto-pasang).
+- Akses **`sudo`** (pasang Docker / paket, login PAM).
+- Port **80** bebas di host controller (atau atur di nginx).
+- Cara **Native** (B) butuh Linux dengan **systemd** + **PAM** untuk login akun OS asli.
+
 ## A. Controller — Docker (lightweight) ⭐
 
 Tiga image kecil (**backend + frontend + nginx**) berbagi base `python:3.12-slim`
@@ -79,6 +85,21 @@ cara **Native** di bawah.
 docker compose pull && docker compose up -d   # ghcr.io/suryaex/secureops-{backend,web}:latest
 ```
 > Pertama kali, set package GHCR ke **public** (atau `docker login ghcr.io`).
+
+### Daftar perintah (Docker)
+
+| Perintah | Fungsi |
+|---|---|
+| `git clone https://github.com/suryaex/secureops.git && cd secureops` | Ambil sumber |
+| `./install.sh` | Pasang + build + start (auto Docker, `.env`+secret, deteksi LAN) |
+| `make install` | Sama seperti `./install.sh` |
+| `./install.sh --prod` | Produksi (`restart=always` + log rotation) |
+| `./install.sh --tailscale` | Join Tailscale, bind ke IP VPN-nya |
+| `./install.sh --public` | Deteksi IP publik & tambah ke CORS |
+| `./install.sh --down` | Stop stack |
+| `./install.sh --reset` | Stop + **HAPUS** semua data |
+| `docker compose pull && docker compose up -d` | Jalankan dari image GHCR (tanpa build) |
+| `docker compose logs -f` | Lihat log live |
 
 ## B. Controller — Native (systemd + nginx, login PAM)
 
