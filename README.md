@@ -45,6 +45,9 @@ Pengembang: **Muhammad Surya Ragasin**
 - ⚡ **Auto-register agent** (one-liner, mirip Tailscale auth-key).
 - 🔌 **LogSync** — kumpulkan log ARM/mikrokontroler (HTTP) & appliance jaringan (syslog) → backup ke **StorageHub**.
 - 🛡️ Hardening: JWT secret non-default, security headers, rate-limit, ingest ber-kunci.
+- 🔄 **Update dari aplikasi** — Settings → *Software update* cek rilis terbaru di GitHub,
+  admin tinggal klik **Update & restart** (pull → rebuild → restart). Lihat
+  [`docs/SELF_UPDATE.md`](docs/SELF_UPDATE.md).
 
 ---
 
