@@ -74,6 +74,14 @@ def is_newer(candidate: str, current: str) -> bool:
 
 
 # ------------------------------ GitHub lookup ------------------------------ #
+class _GitHubUnreachable(Exception):
+    """GitHub itself could not be reached (DNS / timeout / connection refused).
+
+    Distinct from "GitHub answered, but the repo has no release/tag yet", which
+    is reported as ``None`` so the caller can tell the two apart.
+    """
+
+
 def _get_json(url: str):
     req = urllib.request.Request(
         url,
@@ -84,6 +92,14 @@ def _get_json(url: str):
 
 
 def _latest_release(repo: str):
+    """Latest published release, falling back to the newest tag.
+
+    Returns ``None`` when GitHub is reachable but the repo has no published
+    release or tag yet (releases/latest 404 + empty tags). Raises
+    ``_GitHubUnreachable`` only on a genuine network failure (timeout / DNS /
+    connection refused) or when GitHub answers but is unhappy (403 rate-limit,
+    5xx) — i.e. the only cases that warrant a "could not reach GitHub" message.
+    """
     try:
         rel = _get_json(_RELEASES_LATEST.format(repo=repo))
         if isinstance(rel, dict) and rel.get("tag_name"):
@@ -93,32 +109,56 @@ def _latest_release(repo: str):
                 "url": rel.get("html_url") or "",
                 "published_at": rel.get("published_at") or "",
             }
-    except (urllib.error.HTTPError, urllib.error.URLError, ValueError, OSError):
-        pass
+    except urllib.error.HTTPError as exc:
+        if exc.code != 404:  # 403 rate-limit, 5xx, etc. — reachable but unhappy.
+            raise _GitHubUnreachable from exc
+        # 404 → no published release yet; try the newest tag below.
+    except (urllib.error.URLError, OSError) as exc:
+        raise _GitHubUnreachable from exc  # genuinely unreachable.
+    except ValueError:
+        return None  # reachable, but unparseable body — treat as nothing published.
+
+    # No published release → newest tag.
     try:
         tags = _get_json(_TAGS.format(repo=repo))
-        if isinstance(tags, list) and tags:
-            return {
-                "version": tags[0].get("name", ""),
-                "notes": "",
-                "url": f"https://github.com/{repo}/releases",
-                "published_at": "",
-            }
-    except (urllib.error.HTTPError, urllib.error.URLError, ValueError, OSError):
-        pass
+    except urllib.error.HTTPError as exc:
+        if exc.code != 404:
+            raise _GitHubUnreachable from exc
+        return None
+    except (urllib.error.URLError, OSError) as exc:
+        raise _GitHubUnreachable from exc
+    except ValueError:
+        return None
+    if isinstance(tags, list) and tags:
+        return {
+            "version": tags[0].get("name", ""),
+            "notes": "",
+            "url": f"https://github.com/{repo}/releases",
+            "published_at": "",
+        }
     return None
 
 
 # -------------------------------- public API ------------------------------- #
 def check() -> dict:
-    latest = _latest_release(_repo())
-    if latest is None:
+    try:
+        latest = _latest_release(_repo())
+    except _GitHubUnreachable:
         return {
             "current": APP_VERSION,
             "latest": None,
             "update_available": False,
             "checked_at": int(time.time()),
             "error": "Could not reach GitHub to check for updates.",
+        }
+    if latest is None:
+        # GitHub answered, but the repo has no published release or tag yet —
+        # not an error: the running version is the latest known one.
+        return {
+            "current": APP_VERSION,
+            "latest": APP_VERSION,
+            "update_available": False,
+            "checked_at": int(time.time()),
         }
     return {
         "current": APP_VERSION,
