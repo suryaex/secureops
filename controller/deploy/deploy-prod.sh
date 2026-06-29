@@ -259,6 +259,36 @@ sudo systemctl disable --now secureops-frontend 2>/dev/null || true
 sudo rm -f /etc/systemd/system/secureops-frontend.service || true
 sudo systemctl daemon-reload
 
+# -------- 8b) In-app update watcher (baremetal) ----------
+# Lets the dashboard's "Update & restart" button pull + reinstall natively:
+# the backend writes a trigger into /var/lib/secureops, and this watcher runs
+# scripts/self-update.sh --watch (native rebuild: venv + npm build + restart).
+if [[ "${SECUREOPS_NO_UPDATER:-0}" != "1" ]]; then
+  say "Installing in-app update watcher (secureops-updater)…"
+  GIT_ROOT="$(cd "$REPO_DIR/.." && pwd)"            # repo root holds scripts/ + .git
+  UPDATER_TMPL="$GIT_ROOT/scripts/secureops-updater.service"
+  sudo mkdir -p /var/lib/secureops 2>/dev/null || true
+  if [[ -f "$UPDATER_TMPL" ]]; then
+    sed "s|__REPO_DIR__|$GIT_ROOT|g" "$UPDATER_TMPL" \
+      | sudo tee /etc/systemd/system/secureops-updater.service >/dev/null
+    # Pin native mode so the watcher rebuilds via venv/npm (not docker compose).
+    sudo mkdir -p /etc/systemd/system/secureops-updater.service.d
+    printf '[Service]\nEnvironment=SECUREOPS_DEPLOY_MODE=baremetal\n' \
+      | sudo tee /etc/systemd/system/secureops-updater.service.d/mode.conf >/dev/null
+    sudo systemctl daemon-reload
+    if sudo systemctl enable --now secureops-updater.service 2>/dev/null; then
+      info "Update watcher active — dashboard 'Update & restart' will pull + rebuild + restart."
+    else
+      warn "Could not enable secureops-updater.service — start it manually:"
+      warn "  sudo systemctl enable --now secureops-updater.service"
+    fi
+  else
+    warn "Updater unit template missing ($UPDATER_TMPL) — skipping watcher."
+  fi
+else
+  info "Skipping update watcher (SECUREOPS_NO_UPDATER=1)."
+fi
+
 # -------- 9) Status ----------
 sleep 2
 say "Status:"
