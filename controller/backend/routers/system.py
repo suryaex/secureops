@@ -17,6 +17,7 @@ import os
 from database import get_db
 from auth import get_current_user
 from agent_client import resolve_server, agent_get_json
+from appversion import APP_VERSION
 import models
 
 try:
@@ -112,6 +113,7 @@ async def system_health(
 
     return {
         "available": True,
+        "app_version": APP_VERSION,
         "hostname": socket.gethostname(),
         "platform": platform.platform(),
         "system": platform.system(),

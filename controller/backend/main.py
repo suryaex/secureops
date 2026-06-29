@@ -209,7 +209,7 @@ def health():
     return {
         "status":   "ok",
         "service":  "SecureOps API",
-        "version":  "1.2.0",
+        "version":  APP_VERSION,
         "mode":     "agent" if AGENT_MODE else "controller",
         "hostname": socket.gethostname(),
     }

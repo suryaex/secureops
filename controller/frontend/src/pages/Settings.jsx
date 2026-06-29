@@ -146,7 +146,7 @@ export default function Settings() {
           {t('settings.about')}
         </h3>
         <div className="space-y-2 text-sm">
-          <p className="text-gray-700"><span className="font-semibold">SecureOps</span> v1.1.0</p>
+          <p className="text-gray-700"><span className="font-semibold">SecureOps</span> {health?.app_version ? `v${health.app_version}` : ''}</p>
           <p className="text-gray-500">{t('settings.aboutDesc')}</p>
           <p className="text-gray-400 text-xs">FastAPI · React · SQLite · Linux PAM</p>
         </div>
