@@ -28,6 +28,11 @@ services:
       SECUREOPS_LOGSYNC_INTERVAL_MIN: ${SECUREOPS_LOGSYNC_INTERVAL_MIN:-15}
     volumes:
       - secureops_data:/app/data
+      # Shared update-state dir: the in-app "Update & restart" button writes a
+      # trigger file here, which the host-side watcher (scripts/self-update.sh
+      # --watch, installed by install.sh) picks up to pull + rebuild + restart.
+      # This keeps the docker socket OUT of the container (host does the work).
+      - ${SECUREOPS_STATE_DIR:-/var/lib/secureops}:/var/lib/secureops
     expose:
       - "8000"
     networks:

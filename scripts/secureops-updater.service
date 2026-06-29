@@ -1,0 +1,31 @@
+# SecureOps in-app update watcher (host-side).
+#
+# Runs scripts/self-update.sh --watch on the HOST, where git + docker live, so
+# the dashboard's "Update & restart" button can pull + rebuild + restart the
+# whole stack without ever mounting the docker socket into the backend container.
+#
+# install.sh installs a path-resolved copy of this unit to
+# /etc/systemd/system/secureops-updater.service and enables it. To install it
+# manually, replace __REPO_DIR__ with the absolute path to this repo, then:
+#   sudo cp scripts/secureops-updater.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now secureops-updater.service
+[Unit]
+Description=SecureOps in-app update watcher
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=__REPO_DIR__
+ExecStart=/usr/bin/env bash __REPO_DIR__/scripts/self-update.sh --watch
+Restart=always
+RestartSec=10
+# Match the in-app updater's defaults (override here if you customised them).
+Environment=SECUREOPS_GITHUB_REPO=suryaex/secureops
+Environment=SECUREOPS_UPDATE_BRANCH=main
+Environment=SECUREOPS_UPDATE_TRIGGER=/var/lib/secureops/update.request
+Environment=SECUREOPS_UPDATE_STATUS=/var/lib/secureops/update.status
+
+[Install]
+WantedBy=multi-user.target

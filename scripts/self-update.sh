@@ -35,11 +35,17 @@ compose() {
   else log "Docker Compose not found"; return 127; fi
 }
 
-compose_file() {
-  for f in docker-compose.prod.yml docker-compose.yml; do
-    [ -f "$REPO_DIR/$f" ] && { echo "$f"; return 0; }
-  done
-  return 1
+# Build the full `-f base [-f prod]` chain. The prod overlay only *adds* to the
+# base file (restart policy, log rotation) — it has no service/image/build
+# definitions of its own, so it must never be used alone. Always include the
+# base; layer prod on top when present (opt out with SECUREOPS_UPDATE_PROD=0).
+compose_files() {
+  [ -f "$REPO_DIR/docker-compose.yml" ] || return 1
+  local args="-f docker-compose.yml"
+  if [ -f "$REPO_DIR/docker-compose.prod.yml" ] && [ "${SECUREOPS_UPDATE_PROD:-1}" = "1" ]; then
+    args="$args -f docker-compose.prod.yml"
+  fi
+  echo "$args"
 }
 
 latest_tag() {
@@ -57,10 +63,16 @@ do_check() {
 
 do_apply() {
   cd "$REPO_DIR"
-  status "updating" "Fetching latest source"
-  git fetch --tags --prune origin
+  # The watcher runs as root while the repo is owned by the deploy user; tell git
+  # this checkout is trusted so fetch/checkout don't bail on "dubious ownership".
+  git config --global --add safe.directory "$REPO_DIR" 2>/dev/null || true
 
-  local tag cf
+  status "updating" "Fetching latest source"
+  if ! git fetch --tags --prune origin; then
+    status "error" "git fetch failed — check network / credentials"; return 1
+  fi
+
+  local tag cfs
   tag="$(latest_tag 2>/dev/null || true)"
   if [ -n "${tag:-}" ] && git rev-parse "refs/tags/${tag}" >/dev/null 2>&1; then
     log "Checking out release ${tag}"
@@ -71,14 +83,16 @@ do_apply() {
     git merge --ff-only "origin/${UPDATE_BRANCH}"
   fi
 
-  cf="$(compose_file)" || { status "error" "No compose file found"; exit 1; }
-  log "Rebuilding images via ${cf}…"
+  cfs="$(compose_files)" || { status "error" "No compose file found"; return 1; }
+  log "Rebuilding images via ${cfs}…"
   status "rebuilding" "Building updated images"
-  compose -f "$cf" build
+  # shellcheck disable=SC2086 — $cfs is a deliberate, controlled flag list.
+  compose $cfs build
 
   log "Restarting stack…"
   status "restarting" "Recreating containers"
-  compose -f "$cf" up -d
+  # shellcheck disable=SC2086
+  compose $cfs up -d
 
   status "done" "Updated to ${tag:-${UPDATE_BRANCH}} and restarted"
   log "Update complete."
@@ -90,7 +104,12 @@ do_watch() {
   while true; do
     if [ -f "$TRIGGER" ]; then
       log "Trigger detected."
-      do_apply || status "error" "Update failed — see logs"
+      if ! do_apply; then
+        status "error" "Update failed — see logs"
+        # Consume the trigger so a persistent failure doesn't loop every cycle;
+        # the operator can click Update again to retry.
+        mv -f "$TRIGGER" "${TRIGGER}.failed" 2>/dev/null || rm -f "$TRIGGER" 2>/dev/null || true
+      fi
     fi
     sleep 15
   done
