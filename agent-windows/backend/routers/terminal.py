@@ -20,7 +20,7 @@ import shutil
 from datetime import datetime
 from pathlib import Path
 
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 
 import auth
 
@@ -309,7 +309,7 @@ async def terminal_ws(ws: WebSocket, key: str = Query(default="")):
 # ---------- Recorded session listing & download ----------
 
 @router.get("/recordings")
-def list_recordings():
+def list_recordings(_user=Depends(auth.get_current_user)):
     """List all .cast recordings on this agent."""
     if not RECORD_DIR.exists():
         return {"recordings": []}
@@ -328,15 +328,18 @@ def list_recordings():
 
 
 @router.get("/recordings/{name}")
-def download_recording(name: str):
+def download_recording(name: str, _user=Depends(auth.get_current_user)):
     """Stream a single .cast file back to the controller."""
     from fastapi.responses import FileResponse
-    from fastapi import HTTPException
 
-    # Path-traversal guard
-    safe = RECORD_DIR / name
-    if not str(safe.resolve()).startswith(str(RECORD_DIR.resolve())):
+    # Path-traversal guard: resolved path must stay inside RECORD_DIR.
+    # (A string startswith() check is bypassable via a sibling dir whose
+    #  name shares RECORD_DIR's prefix, e.g. ".../sessions-evil".)
+    safe = (RECORD_DIR / name).resolve()
+    try:
+        safe.relative_to(RECORD_DIR.resolve())
+    except ValueError:
         raise HTTPException(400, "invalid name")
-    if not safe.exists():
+    if not safe.is_file():
         raise HTTPException(404, "not found")
-    return FileResponse(str(safe), media_type="application/json", filename=name)
+    return FileResponse(str(safe), media_type="application/json", filename=safe.name)
