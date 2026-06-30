@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useI18n } from '../i18n'
 import api, { apiBaseURL, setApiBaseURL } from '../api/client'
+import Flag from '../components/Flag'
 
 export default function Settings() {
   const { user } = useAuth()
@@ -50,7 +51,7 @@ export default function Settings() {
                   : 'border-gray-200 text-gray-600 hover:border-primary'
               }`}
             >
-              <span className="text-base">{l.flag}</span>
+              <Flag flag={l.flag} />
               <span className="truncate">{l.label}</span>
             </button>
           ))}

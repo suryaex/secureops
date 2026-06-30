@@ -31,8 +31,11 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,
-        // Pre-cache all build output
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        // Pre-cache core build output. SVGs are intentionally excluded:
+        // flag-icons ships ~260 country flag SVGs and pre-caching all of them
+        // would bloat the offline install by ~5 MB. Flags (and other SVGs) are
+        // runtime-cached on first use via the CacheFirst images rule below.
+        globPatterns: ['**/*.{js,css,html,png,ico,woff2}'],
         runtimeCaching: [
           // API — network-first, 5 min cache, 8s timeout
           {
@@ -79,7 +82,7 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'secureops-images',
-              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
         ],

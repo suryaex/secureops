@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useI18n } from '../i18n'
+import Flag from './Flag'
 
 // Tombol pemilih bahasa untuk TopBar (dropdown ringkas dengan bendera).
 export default function LanguageSwitcher() {
@@ -35,7 +36,7 @@ export default function LanguageSwitcher() {
                 l.code === current.code ? 'bg-blue-50 text-primary font-medium' : 'text-gray-700'
               }`}
             >
-              <span className="text-base">{l.flag}</span>
+              <Flag flag={l.flag} />
               <span className="flex-1">{l.label}</span>
               {l.code === current.code && (
                 <span className="material-symbols-outlined text-primary text-base">check</span>
