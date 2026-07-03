@@ -41,10 +41,34 @@ FRONTEND_ROOT="${SECUREOPS_FRONTEND_ROOT:-/var/www/secureops}"
 SUDO=""; [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1 && SUDO="sudo"
 
 log()    { printf '[self-update] %s\n' "$*" >&2; }
+
+# Make sure the state dir (trigger + status files) exists and is writable by
+# the invoking user. Manual runs happen as a regular user while the dir lives
+# under /var/lib, so escalate once here instead of failing on every write.
+ensure_state_dir() {
+  local dir; dir="$(dirname "$STATUS_FILE")"
+  [ -d "$dir" ] || mkdir -p "$dir" 2>/dev/null || $SUDO mkdir -p "$dir" || return 1
+  if [ ! -w "$dir" ]; then
+    $SUDO chgrp "$(id -gn)" "$dir" 2>/dev/null || true
+    $SUDO chmod g+rwx "$dir" 2>/dev/null || true
+    [ -w "$dir" ] || $SUDO chown "$(id -un)" "$dir" 2>/dev/null || true
+  fi
+  # Pre-existing root-owned status file blocks the redirect even when the dir
+  # itself is writable — hand it to the invoking user.
+  if [ -e "$STATUS_FILE" ] && [ ! -w "$STATUS_FILE" ]; then
+    $SUDO chown "$(id -un)" "$STATUS_FILE" 2>/dev/null || true
+  fi
+  [ -w "$dir" ]
+}
+
 status() {
-  mkdir -p "$(dirname "$STATUS_FILE")" 2>/dev/null || true
-  printf '{"state":"%s","message":"%s","at":%s}\n' "$1" "${2:-}" "$(date +%s)" \
-    > "$STATUS_FILE" 2>/dev/null || true
+  local line
+  line="$(printf '{"state":"%s","message":"%s","at":%s}' "$1" "${2:-}" "$(date +%s)")"
+  if ensure_state_dir 2>/dev/null && { [ ! -e "$STATUS_FILE" ] || [ -w "$STATUS_FILE" ]; }; then
+    printf '%s\n' "$line" > "$STATUS_FILE"
+  elif [ -n "$SUDO" ]; then
+    printf '%s\n' "$line" | $SUDO tee "$STATUS_FILE" >/dev/null 2>&1 || true
+  fi
 }
 
 compose() {
@@ -98,7 +122,9 @@ fetch_source() {
   git config --global --add safe.directory "$REPO_DIR" 2>/dev/null || true
 
   status "updating" "Fetching latest source"
-  if ! git fetch --tags --prune origin; then
+  # --force: release tags may be re-pointed upstream (history hygiene); a plain
+  # fetch rejects those with "would clobber existing tag" and aborts the update.
+  if ! git fetch --tags --force --prune origin; then
     status "error" "git fetch failed — check network / credentials"; return 1
   fi
   local tag
