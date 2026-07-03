@@ -205,6 +205,7 @@ const Toggle = ({ label, checked, onChange }) => (
 // Software-update card: checks GitHub for a newer SecureOps release and lets an
 // admin apply it (pull + rebuild + restart) straight from the dashboard.
 const UpdateCard = ({ isAdmin }) => {
+  const { t } = useI18n()
   const [info, setInfo] = useState(null)
   const [status, setStatus] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -215,7 +216,7 @@ const UpdateCard = ({ isAdmin }) => {
       const { data } = await api.get('/update/check')
       setInfo(data)
     } catch {
-      setInfo({ current: '?', latest: null, update_available: false, error: 'Could not reach the controller.' })
+      setInfo({ current: '?', latest: null, update_available: false, noServer: true })
     } finally {
       setBusy(false)
     }
@@ -237,11 +238,11 @@ const UpdateCard = ({ isAdmin }) => {
             if (s.state === 'done') setTimeout(() => window.location.reload(), 2000)
           }
         } catch {
-          setStatus({ state: 'restarting', message: 'Controller is restarting…' })
+          setStatus({ state: 'restarting', message: t('settings.updateRestarting') })
         }
       }, 3000)
     } catch (e) {
-      setStatus({ state: 'error', message: e?.response?.data?.detail || 'Apply failed.' })
+      setStatus({ state: 'error', message: e?.response?.data?.detail || t('settings.updateApplyFailed') })
     } finally {
       setBusy(false)
     }
@@ -251,17 +252,17 @@ const UpdateCard = ({ isAdmin }) => {
     <div className="card p-5">
       <h3 className="text-gray-800 font-semibold mb-1 flex items-center gap-2">
         <span className="material-symbols-outlined text-primary">system_update</span>
-        Software update
+        {t('settings.updateTitle')}
       </h3>
       <p className="text-gray-500 text-xs mb-4">
         {info?.update_available
-          ? `New version available: v${info.latest}`
-          : info?.error ? info.error : "You're up to date."}
+          ? t('settings.updateAvailable', { v: info.latest })
+          : info?.noServer ? t('settings.updateErrReach') : info?.error ? info.error : info ? t('settings.updateUpToDate') : '…'}
       </p>
 
       <div className="grid grid-cols-2 gap-4 text-sm">
-        <Field label="Current" value={info ? `v${info.current}` : '…'} mono />
-        <Field label="Latest" value={info?.latest ? `v${info.latest}` : (info?.error ? '—' : '…')} mono />
+        <Field label={t('settings.updateCurrent')} value={info ? `v${info.current}` : '…'} mono />
+        <Field label={t('settings.updateLatest')} value={info?.latest ? `v${info.latest}` : (info?.error || info?.noServer ? '—' : '…')} mono />
       </div>
 
       {info?.update_available && info?.notes && (
@@ -270,15 +271,15 @@ const UpdateCard = ({ isAdmin }) => {
 
       <div className="mt-4 flex items-center gap-3">
         <button onClick={check} disabled={busy} className="btn-secondary">
-          <span className="material-symbols-outlined text-lg">refresh</span>Check
+          <span className="material-symbols-outlined text-lg">refresh</span>{t('settings.updateCheck')}
         </button>
         {info?.update_available && isAdmin && (
           <button onClick={apply} disabled={busy} className="btn-primary">
-            <span className="material-symbols-outlined text-lg">download</span>Update &amp; restart
+            <span className="material-symbols-outlined text-lg">download</span>{t('settings.updateApply')}
           </button>
         )}
         {info?.update_available && !isAdmin && (
-          <span className="text-gray-400 text-xs">Admin role required to apply updates.</span>
+          <span className="text-gray-400 text-xs">{t('settings.updateAdminHint')}</span>
         )}
       </div>
 
