@@ -146,12 +146,15 @@ apply_docker() {
   cfs="$(compose_files)" || { status "error" "No compose file found"; return 1; }
   log "Rebuilding images via ${cfs}…"
   status "rebuilding" "Building updated images"
+  # Explicit failure checks: callers invoke this function behind `||`, which
+  # suspends errexit inside it — without these, a failed build would fall
+  # through and the stale stack would be restarted as if the update succeeded.
   # shellcheck disable=SC2086 — $cfs is a deliberate, controlled flag list.
-  compose $cfs build
+  compose $cfs build || { status "error" "Image build failed"; return 1; }
   log "Restarting stack…"
   status "restarting" "Recreating containers"
   # shellcheck disable=SC2086
-  compose $cfs up -d
+  compose $cfs up -d || { status "error" "Container restart failed"; return 1; }
 }
 
 # Native (bare-metal) reinstall: refresh backend venv, rebuild the frontend SPA,
@@ -171,16 +174,23 @@ apply_baremetal() {
     python3 -m venv "$backend_dir/venv"
   fi
   "$backend_dir/venv/bin/pip" install --quiet --upgrade pip >/dev/null 2>&1 || true
-  "$backend_dir/venv/bin/pip" install --quiet -r "$backend_dir/requirements.txt"
+  "$backend_dir/venv/bin/pip" install --quiet -r "$backend_dir/requirements.txt" \
+    || { status "error" "Backend dependency install failed"; return 1; }
 
   status "rebuilding" "Rebuilding frontend"
   log "Building frontend SPA…"
+  # Callers run this function behind `||`, which suspends errexit inside it —
+  # each step needs an explicit check or a failed build would still publish
+  # the stale dist and report the update as complete.
   (
+    set -e
     cd "$frontend_dir"
     if [ -f package-lock.json ]; then npm ci --no-audit --no-fund; else npm install --no-audit --no-fund; fi
     case "$(uname -m)" in arm*|aarch64) export NODE_OPTIONS="${NODE_OPTIONS:---max-old-space-size=512}";; esac
     npm run build
-  )
+  ) || { status "error" "Frontend build failed — see logs"; return 1; }
+  [ -f "$frontend_dir/dist/index.html" ] \
+    || { status "error" "Frontend build produced no dist/"; return 1; }
   log "Publishing dist → ${FRONTEND_ROOT}"
   $SUDO mkdir -p "$FRONTEND_ROOT"
   $SUDO rsync -a --delete "$frontend_dir/dist/" "$FRONTEND_ROOT/"
@@ -188,7 +198,8 @@ apply_baremetal() {
 
   status "restarting" "Restarting services"
   log "Restarting secureops-backend + nginx…"
-  $SUDO systemctl restart secureops-backend
+  $SUDO systemctl restart secureops-backend \
+    || { status "error" "secureops-backend failed to restart"; return 1; }
   $SUDO systemctl reload nginx 2>/dev/null || $SUDO systemctl restart nginx 2>/dev/null || true
 }
 

@@ -1,6 +1,6 @@
 {
   "name": "secureops-frontend",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "private": true,
   "description": "SecureOps — Security Audit Dashboard (PWA + Mobile)",
   "scripts": {
