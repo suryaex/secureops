@@ -40,14 +40,14 @@ export default function Sidebar({ open, onClose }) {
           </div>
           <div>
             <p className="text-ink font-bold text-sm leading-tight tracking-tight">SecureOps</p>
-            <p className="text-ink-muted text-[11px] leading-tight mt-0.5">State Polytechnic of Sriwijaya</p>
+            <p className="text-ink-muted text-[11px] leading-tight mt-0.5">Polsri</p>
           </div>
         </div>
         {/* Close button (mobile only) */}
         <button
           onClick={onClose}
           className="lg:hidden text-ink-muted hover:text-ink p-1 rounded-lg transition-colors"
-          aria-label="Close menu"
+          aria-label={t('common.closeMenu')}
         >
           <span className="material-symbols-outlined text-xl">close</span>
         </button>
@@ -97,7 +97,7 @@ export default function Sidebar({ open, onClose }) {
             <p className="text-ink text-xs font-semibold truncate">{user?.username}</p>
             <p className="text-ink-muted text-[10px] capitalize">{user?.role}</p>
           </div>
-          <button onClick={logout} title="Logout" className="text-ink-muted hover:text-danger transition-colors">
+          <button onClick={logout} title={t('menu.logout')} className="text-ink-muted hover:text-danger transition-colors">
             <span className="material-symbols-outlined text-base">logout</span>
           </button>
         </div>

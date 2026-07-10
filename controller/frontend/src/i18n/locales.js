@@ -11,7 +11,7 @@ export const DEFAULT_LANG = 'en'
 
 export const translations = {
   en: {
-    common: { loading: 'Loading…', generating: 'Generating…', save: 'Save', saved: 'Saved', cancel: 'Cancel', search: 'Search', all: 'All', today: 'Today', days7: '7 Days', next: 'Next', prev: 'Previous', active: 'active', success: 'Success', failed: 'Failed', applyReload: 'Apply & Reload', refresh: 'Refresh', status: 'Status', scanning: 'Scanning…' },
+    common: { loading: 'Loading…', generating: 'Generating…', save: 'Save', saved: 'Saved', cancel: 'Cancel', search: 'Search', all: 'All', today: 'Today', days7: '7 Days', next: 'Next', prev: 'Previous', active: 'active', success: 'Success', failed: 'Failed', applyReload: 'Apply & Reload', refresh: 'Refresh', status: 'Status', scanning: 'Scanning…', openMenu: 'Open menu', closeMenu: 'Close menu' },
     sev: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' },
     nav: { dashboard: 'Dashboard', fleet: 'Fleet', audit: 'Audit', sudo: 'Sudo', integrity: 'Integrity', logs: 'Logs', terminal: 'Terminal', replays: 'Replays', servers: 'Servers', users: 'Users', settings: 'Settings', support: 'Support' },
     top: { systemHealth: 'System Health', network: 'Network', alerts: 'Alerts', searchPlaceholder: 'Search logs, users, or alerts…', searching: 'Searching…', noResults: 'No results for "{q}"', serversCount: 'Servers ({n})', manage: 'Manage', fleetOverview: 'Fleet Overview', noServer: 'No server', group: { logs: 'Activity Logs', users: 'Sudo Users', files: 'Files', permissions: 'Permissions' } },
@@ -51,7 +51,7 @@ export const translations = {
   },
 
   id: {
-    common: { loading: 'Memuat…', generating: 'Membuat…', save: 'Simpan', saved: 'Tersimpan', cancel: 'Batal', search: 'Cari', all: 'Semua', today: 'Hari ini', days7: '7 Hari', next: 'Berikutnya', prev: 'Sebelumnya', active: 'aktif', success: 'Berhasil', failed: 'Gagal', applyReload: 'Terapkan & Muat Ulang', refresh: 'Segarkan', status: 'Status', scanning: 'Memindai…' },
+    common: { loading: 'Memuat…', generating: 'Membuat…', save: 'Simpan', saved: 'Tersimpan', cancel: 'Batal', search: 'Cari', all: 'Semua', today: 'Hari ini', days7: '7 Hari', next: 'Berikutnya', prev: 'Sebelumnya', active: 'aktif', success: 'Berhasil', failed: 'Gagal', applyReload: 'Terapkan & Muat Ulang', refresh: 'Segarkan', status: 'Status', scanning: 'Memindai…', openMenu: 'Buka menu', closeMenu: 'Tutup menu' },
     sev: { critical: 'Kritis', high: 'Tinggi', medium: 'Sedang', low: 'Rendah' },
     nav: { dashboard: 'Dasbor', fleet: 'Armada', audit: 'Audit', sudo: 'Sudo', integrity: 'Integritas', logs: 'Log', terminal: 'Terminal', replays: 'Rekaman', servers: 'Server', users: 'Pengguna', settings: 'Pengaturan', support: 'Bantuan' },
     top: { systemHealth: 'Kesehatan Sistem', network: 'Jaringan', alerts: 'Peringatan', searchPlaceholder: 'Cari log, pengguna, atau peringatan…', searching: 'Mencari…', noResults: 'Tidak ada hasil untuk "{q}"', serversCount: 'Server ({n})', manage: 'Kelola', fleetOverview: 'Ikhtisar Armada', noServer: 'Tidak ada server', group: { logs: 'Log Aktivitas', users: 'Pengguna Sudo', files: 'Berkas', permissions: 'Izin Akses' } },
@@ -91,7 +91,7 @@ export const translations = {
   },
 
   ms: {
-    common: { loading: 'Memuatkan…', generating: 'Menjana…', save: 'Simpan', saved: 'Disimpan', cancel: 'Batal', search: 'Cari', all: 'Semua', today: 'Hari ini', days7: '7 Hari', next: 'Seterusnya', prev: 'Sebelumnya', active: 'aktif', success: 'Berjaya', failed: 'Gagal', applyReload: 'Guna & Muat Semula', refresh: 'Segar Semula', status: 'Status', scanning: 'Mengimbas…' },
+    common: { loading: 'Memuatkan…', generating: 'Menjana…', save: 'Simpan', saved: 'Disimpan', cancel: 'Batal', search: 'Cari', all: 'Semua', today: 'Hari ini', days7: '7 Hari', next: 'Seterusnya', prev: 'Sebelumnya', active: 'aktif', success: 'Berjaya', failed: 'Gagal', applyReload: 'Guna & Muat Semula', refresh: 'Segar Semula', status: 'Status', scanning: 'Mengimbas…', openMenu: 'Buka menu', closeMenu: 'Tutup menu' },
     sev: { critical: 'Kritikal', high: 'Tinggi', medium: 'Sederhana', low: 'Rendah' },
     nav: { dashboard: 'Papan Pemuka', fleet: 'Armada', audit: 'Audit', sudo: 'Sudo', integrity: 'Integriti', logs: 'Log', terminal: 'Terminal', replays: 'Rakaman', servers: 'Pelayan', users: 'Pengguna', settings: 'Tetapan', support: 'Sokongan' },
     top: { systemHealth: 'Kesihatan Sistem', network: 'Rangkaian', alerts: 'Amaran', searchPlaceholder: 'Cari log, pengguna atau amaran…', searching: 'Mencari…', noResults: 'Tiada hasil untuk "{q}"', serversCount: 'Pelayan ({n})', manage: 'Urus', fleetOverview: 'Gambaran Armada', noServer: 'Tiada pelayan', group: { logs: 'Log Aktiviti', users: 'Pengguna Sudo', files: 'Fail', permissions: 'Kebenaran' } },
@@ -131,7 +131,7 @@ export const translations = {
   },
 
   zh: {
-    common: { loading: '加载中…', generating: '生成中…', save: '保存', saved: '已保存', cancel: '取消', search: '搜索', all: '全部', today: '今天', days7: '7 天', next: '下一页', prev: '上一页', active: '活跃', success: '成功', failed: '失败', applyReload: '应用并重新加载', refresh: '刷新', status: '状态', scanning: '扫描中…' },
+    common: { loading: '加载中…', generating: '生成中…', save: '保存', saved: '已保存', cancel: '取消', search: '搜索', all: '全部', today: '今天', days7: '7 天', next: '下一页', prev: '上一页', active: '活跃', success: '成功', failed: '失败', applyReload: '应用并重新加载', refresh: '刷新', status: '状态', scanning: '扫描中…', openMenu: '打开菜单', closeMenu: '关闭菜单' },
     sev: { critical: '严重', high: '高', medium: '中', low: '低' },
     nav: { dashboard: '仪表板', fleet: '集群', audit: '审计', sudo: 'Sudo', integrity: '完整性', logs: '日志', terminal: '终端', replays: '回放', servers: '服务器', users: '用户', settings: '设置', support: '支持' },
     top: { systemHealth: '系统运行状况', network: '网络', alerts: '警报', searchPlaceholder: '搜索日志、用户或警报…', searching: '搜索中…', noResults: '没有“{q}”的结果', serversCount: '服务器 ({n})', manage: '管理', fleetOverview: '集群概览', noServer: '无服务器', group: { logs: '活动日志', users: 'Sudo 用户', files: '文件', permissions: '权限' } },
@@ -171,7 +171,7 @@ export const translations = {
   },
 
   ja: {
-    common: { loading: '読み込み中…', generating: '生成中…', save: '保存', saved: '保存しました', cancel: 'キャンセル', search: '検索', all: 'すべて', today: '今日', days7: '7日間', next: '次へ', prev: '前へ', active: '有効', success: '成功', failed: '失敗', applyReload: '適用して再読み込み', refresh: '更新', status: 'ステータス', scanning: 'スキャン中…' },
+    common: { loading: '読み込み中…', generating: '生成中…', save: '保存', saved: '保存しました', cancel: 'キャンセル', search: '検索', all: 'すべて', today: '今日', days7: '7日間', next: '次へ', prev: '前へ', active: '有効', success: '成功', failed: '失敗', applyReload: '適用して再読み込み', refresh: '更新', status: 'ステータス', scanning: 'スキャン中…', openMenu: 'メニューを開く', closeMenu: 'メニューを閉じる' },
     sev: { critical: '重大', high: '高', medium: '中', low: '低' },
     nav: { dashboard: 'ダッシュボード', fleet: 'フリート', audit: '監査', sudo: 'Sudo', integrity: '整合性', logs: 'ログ', terminal: 'ターミナル', replays: '録画', servers: 'サーバー', users: 'ユーザー', settings: '設定', support: 'サポート' },
     top: { systemHealth: 'システム稼働状況', network: 'ネットワーク', alerts: 'アラート', searchPlaceholder: 'ログ・ユーザー・アラートを検索…', searching: '検索中…', noResults: '「{q}」の結果はありません', serversCount: 'サーバー ({n})', manage: '管理', fleetOverview: 'フリート概要', noServer: 'サーバーなし', group: { logs: 'アクティビティログ', users: 'Sudo ユーザー', files: 'ファイル', permissions: '権限' } },
@@ -211,7 +211,7 @@ export const translations = {
   },
 
   ko: {
-    common: { loading: '불러오는 중…', generating: '생성 중…', save: '저장', saved: '저장됨', cancel: '취소', search: '검색', all: '전체', today: '오늘', days7: '7일', next: '다음', prev: '이전', active: '활성', success: '성공', failed: '실패', applyReload: '적용 후 새로고침', refresh: '새로고침', status: '상태', scanning: '스캔 중…' },
+    common: { loading: '불러오는 중…', generating: '생성 중…', save: '저장', saved: '저장됨', cancel: '취소', search: '검색', all: '전체', today: '오늘', days7: '7일', next: '다음', prev: '이전', active: '활성', success: '성공', failed: '실패', applyReload: '적용 후 새로고침', refresh: '새로고침', status: '상태', scanning: '스캔 중…', openMenu: '메뉴 열기', closeMenu: '메뉴 닫기' },
     sev: { critical: '심각', high: '높음', medium: '중간', low: '낮음' },
     nav: { dashboard: '대시보드', fleet: '플릿', audit: '감사', sudo: 'Sudo', integrity: '무결성', logs: '로그', terminal: '터미널', replays: '녹화', servers: '서버', users: '사용자', settings: '설정', support: '지원' },
     top: { systemHealth: '시스템 상태', network: '네트워크', alerts: '경고', searchPlaceholder: '로그, 사용자 또는 경고 검색…', searching: '검색 중…', noResults: '"{q}"에 대한 결과 없음', serversCount: '서버 ({n})', manage: '관리', fleetOverview: '플릿 개요', noServer: '서버 없음', group: { logs: '활동 로그', users: 'Sudo 사용자', files: '파일', permissions: '권한' } },
@@ -251,7 +251,7 @@ export const translations = {
   },
 
   hi: {
-    common: { loading: 'लोड हो रहा है…', generating: 'बना रहे हैं…', save: 'सहेजें', saved: 'सहेजा गया', cancel: 'रद्द करें', search: 'खोजें', all: 'सभी', today: 'आज', days7: '7 दिन', next: 'अगला', prev: 'पिछला', active: 'सक्रिय', success: 'सफल', failed: 'विफल', applyReload: 'लागू करें और रीलोड करें', refresh: 'ताज़ा करें', status: 'स्थिति', scanning: 'स्कैन हो रहा है…' },
+    common: { loading: 'लोड हो रहा है…', generating: 'बना रहे हैं…', save: 'सहेजें', saved: 'सहेजा गया', cancel: 'रद्द करें', search: 'खोजें', all: 'सभी', today: 'आज', days7: '7 दिन', next: 'अगला', prev: 'पिछला', active: 'सक्रिय', success: 'सफल', failed: 'विफल', applyReload: 'लागू करें और रीलोड करें', refresh: 'ताज़ा करें', status: 'स्थिति', scanning: 'स्कैन हो रहा है…', openMenu: 'मेनू खोलें', closeMenu: 'मेनू बंद करें' },
     sev: { critical: 'गंभीर', high: 'उच्च', medium: 'मध्यम', low: 'निम्न' },
     nav: { dashboard: 'डैशबोर्ड', fleet: 'फ्लीट', audit: 'ऑडिट', sudo: 'Sudo', integrity: 'अखंडता', logs: 'लॉग', terminal: 'टर्मिनल', replays: 'रिकॉर्डिंग', servers: 'सर्वर', users: 'उपयोगकर्ता', settings: 'सेटिंग्स', support: 'सहायता' },
     top: { systemHealth: 'सिस्टम स्वास्थ्य', network: 'नेटवर्क', alerts: 'अलर्ट', searchPlaceholder: 'लॉग, उपयोगकर्ता या अलर्ट खोजें…', searching: 'खोज रहे हैं…', noResults: '"{q}" के लिए कोई परिणाम नहीं', serversCount: 'सर्वर ({n})', manage: 'प्रबंधित करें', fleetOverview: 'फ्लीट अवलोकन', noServer: 'कोई सर्वर नहीं', group: { logs: 'गतिविधि लॉग', users: 'Sudo उपयोगकर्ता', files: 'फ़ाइलें', permissions: 'अनुमतियाँ' } },
@@ -291,7 +291,7 @@ export const translations = {
   },
 
   ar: {
-    common: { loading: 'جارٍ التحميل…', generating: 'جارٍ الإنشاء…', save: 'حفظ', saved: 'تم الحفظ', cancel: 'إلغاء', search: 'بحث', all: 'الكل', today: 'اليوم', days7: '7 أيام', next: 'التالي', prev: 'السابق', active: 'نشط', success: 'نجاح', failed: 'فشل', applyReload: 'تطبيق وإعادة التحميل', refresh: 'تحديث', status: 'الحالة', scanning: 'جارٍ الفحص…' },
+    common: { loading: 'جارٍ التحميل…', generating: 'جارٍ الإنشاء…', save: 'حفظ', saved: 'تم الحفظ', cancel: 'إلغاء', search: 'بحث', all: 'الكل', today: 'اليوم', days7: '7 أيام', next: 'التالي', prev: 'السابق', active: 'نشط', success: 'نجاح', failed: 'فشل', applyReload: 'تطبيق وإعادة التحميل', refresh: 'تحديث', status: 'الحالة', scanning: 'جارٍ الفحص…', openMenu: 'فتح القائمة', closeMenu: 'إغلاق القائمة' },
     sev: { critical: 'حرج', high: 'مرتفع', medium: 'متوسط', low: 'منخفض' },
     nav: { dashboard: 'لوحة التحكم', fleet: 'الأسطول', audit: 'التدقيق', sudo: 'Sudo', integrity: 'السلامة', logs: 'السجلات', terminal: 'الطرفية', replays: 'التسجيلات', servers: 'الخوادم', users: 'المستخدمون', settings: 'الإعدادات', support: 'الدعم' },
     top: { systemHealth: 'حالة النظام', network: 'الشبكة', alerts: 'التنبيهات', searchPlaceholder: 'ابحث في السجلات أو المستخدمين أو التنبيهات…', searching: 'جارٍ البحث…', noResults: 'لا نتائج لـ "{q}"', serversCount: 'الخوادم ({n})', manage: 'إدارة', fleetOverview: 'نظرة عامة على الأسطول', noServer: 'لا يوجد خادم', group: { logs: 'سجلات النشاط', users: 'مستخدمو Sudo', files: 'الملفات', permissions: 'الأذونات' } },
@@ -331,7 +331,7 @@ export const translations = {
   },
 
   es: {
-    common: { loading: 'Cargando…', generating: 'Generando…', save: 'Guardar', saved: 'Guardado', cancel: 'Cancelar', search: 'Buscar', all: 'Todos', today: 'Hoy', days7: '7 días', next: 'Siguiente', prev: 'Anterior', active: 'activo', success: 'Éxito', failed: 'Fallido', applyReload: 'Aplicar y recargar', refresh: 'Actualizar', status: 'Estado', scanning: 'Escaneando…' },
+    common: { loading: 'Cargando…', generating: 'Generando…', save: 'Guardar', saved: 'Guardado', cancel: 'Cancelar', search: 'Buscar', all: 'Todos', today: 'Hoy', days7: '7 días', next: 'Siguiente', prev: 'Anterior', active: 'activo', success: 'Éxito', failed: 'Fallido', applyReload: 'Aplicar y recargar', refresh: 'Actualizar', status: 'Estado', scanning: 'Escaneando…', openMenu: 'Abrir menú', closeMenu: 'Cerrar menú' },
     sev: { critical: 'Crítico', high: 'Alto', medium: 'Medio', low: 'Bajo' },
     nav: { dashboard: 'Panel', fleet: 'Flota', audit: 'Auditoría', sudo: 'Sudo', integrity: 'Integridad', logs: 'Registros', terminal: 'Terminal', replays: 'Grabaciones', servers: 'Servidores', users: 'Usuarios', settings: 'Ajustes', support: 'Soporte' },
     top: { systemHealth: 'Estado del sistema', network: 'Red', alerts: 'Alertas', searchPlaceholder: 'Buscar registros, usuarios o alertas…', searching: 'Buscando…', noResults: 'Sin resultados para "{q}"', serversCount: 'Servidores ({n})', manage: 'Gestionar', fleetOverview: 'Resumen de la flota', noServer: 'Sin servidor', group: { logs: 'Registros de actividad', users: 'Usuarios Sudo', files: 'Archivos', permissions: 'Permisos' } },
@@ -371,7 +371,7 @@ export const translations = {
   },
 
   pt: {
-    common: { loading: 'Carregando…', generating: 'Gerando…', save: 'Salvar', saved: 'Salvo', cancel: 'Cancelar', search: 'Pesquisar', all: 'Todos', today: 'Hoje', days7: '7 dias', next: 'Próximo', prev: 'Anterior', active: 'ativo', success: 'Sucesso', failed: 'Falhou', applyReload: 'Aplicar e recarregar', refresh: 'Atualizar', status: 'Status', scanning: 'Verificando…' },
+    common: { loading: 'Carregando…', generating: 'Gerando…', save: 'Salvar', saved: 'Salvo', cancel: 'Cancelar', search: 'Pesquisar', all: 'Todos', today: 'Hoje', days7: '7 dias', next: 'Próximo', prev: 'Anterior', active: 'ativo', success: 'Sucesso', failed: 'Falhou', applyReload: 'Aplicar e recarregar', refresh: 'Atualizar', status: 'Status', scanning: 'Verificando…', openMenu: 'Abrir menu', closeMenu: 'Fechar menu' },
     sev: { critical: 'Crítico', high: 'Alto', medium: 'Médio', low: 'Baixo' },
     nav: { dashboard: 'Painel', fleet: 'Frota', audit: 'Auditoria', sudo: 'Sudo', integrity: 'Integridade', logs: 'Registros', terminal: 'Terminal', replays: 'Gravações', servers: 'Servidores', users: 'Usuários', settings: 'Configurações', support: 'Suporte' },
     top: { systemHealth: 'Saúde do sistema', network: 'Rede', alerts: 'Alertas', searchPlaceholder: 'Pesquisar registros, usuários ou alertas…', searching: 'Pesquisando…', noResults: 'Nenhum resultado para "{q}"', serversCount: 'Servidores ({n})', manage: 'Gerenciar', fleetOverview: 'Visão geral da frota', noServer: 'Sem servidor', group: { logs: 'Registros de atividade', users: 'Usuários Sudo', files: 'Arquivos', permissions: 'Permissões' } },
@@ -411,7 +411,7 @@ export const translations = {
   },
 
   fr: {
-    common: { loading: 'Chargement…', generating: 'Génération…', save: 'Enregistrer', saved: 'Enregistré', cancel: 'Annuler', search: 'Rechercher', all: 'Tous', today: "Aujourd'hui", days7: '7 jours', next: 'Suivant', prev: 'Précédent', active: 'actif', success: 'Réussi', failed: 'Échec', applyReload: 'Appliquer et recharger', refresh: 'Actualiser', status: 'Statut', scanning: 'Analyse…' },
+    common: { loading: 'Chargement…', generating: 'Génération…', save: 'Enregistrer', saved: 'Enregistré', cancel: 'Annuler', search: 'Rechercher', all: 'Tous', today: "Aujourd'hui", days7: '7 jours', next: 'Suivant', prev: 'Précédent', active: 'actif', success: 'Réussi', failed: 'Échec', applyReload: 'Appliquer et recharger', refresh: 'Actualiser', status: 'Statut', scanning: 'Analyse…', openMenu: 'Ouvrir le menu', closeMenu: 'Fermer le menu' },
     sev: { critical: 'Critique', high: 'Élevé', medium: 'Moyen', low: 'Faible' },
     nav: { dashboard: 'Tableau de bord', fleet: 'Flotte', audit: 'Audit', sudo: 'Sudo', integrity: 'Intégrité', logs: 'Journaux', terminal: 'Terminal', replays: 'Enregistrements', servers: 'Serveurs', users: 'Utilisateurs', settings: 'Paramètres', support: 'Assistance' },
     top: { systemHealth: 'État du système', network: 'Réseau', alerts: 'Alertes', searchPlaceholder: 'Rechercher journaux, utilisateurs ou alertes…', searching: 'Recherche…', noResults: 'Aucun résultat pour "{q}"', serversCount: 'Serveurs ({n})', manage: 'Gérer', fleetOverview: 'Vue de la flotte', noServer: 'Aucun serveur', group: { logs: "Journaux d'activité", users: 'Utilisateurs Sudo', files: 'Fichiers', permissions: 'Autorisations' } },
@@ -451,7 +451,7 @@ export const translations = {
   },
 
   de: {
-    common: { loading: 'Wird geladen…', generating: 'Wird erstellt…', save: 'Speichern', saved: 'Gespeichert', cancel: 'Abbrechen', search: 'Suchen', all: 'Alle', today: 'Heute', days7: '7 Tage', next: 'Weiter', prev: 'Zurück', active: 'aktiv', success: 'Erfolg', failed: 'Fehlgeschlagen', applyReload: 'Anwenden & neu laden', refresh: 'Aktualisieren', status: 'Status', scanning: 'Wird gescannt…' },
+    common: { loading: 'Wird geladen…', generating: 'Wird erstellt…', save: 'Speichern', saved: 'Gespeichert', cancel: 'Abbrechen', search: 'Suchen', all: 'Alle', today: 'Heute', days7: '7 Tage', next: 'Weiter', prev: 'Zurück', active: 'aktiv', success: 'Erfolg', failed: 'Fehlgeschlagen', applyReload: 'Anwenden & neu laden', refresh: 'Aktualisieren', status: 'Status', scanning: 'Wird gescannt…', openMenu: 'Menü öffnen', closeMenu: 'Menü schließen' },
     sev: { critical: 'Kritisch', high: 'Hoch', medium: 'Mittel', low: 'Niedrig' },
     nav: { dashboard: 'Dashboard', fleet: 'Flotte', audit: 'Audit', sudo: 'Sudo', integrity: 'Integrität', logs: 'Protokolle', terminal: 'Terminal', replays: 'Aufzeichnungen', servers: 'Server', users: 'Benutzer', settings: 'Einstellungen', support: 'Support' },
     top: { systemHealth: 'Systemzustand', network: 'Netzwerk', alerts: 'Warnungen', searchPlaceholder: 'Protokolle, Benutzer oder Warnungen suchen…', searching: 'Suche…', noResults: 'Keine Ergebnisse für „{q}“', serversCount: 'Server ({n})', manage: 'Verwalten', fleetOverview: 'Flottenübersicht', noServer: 'Kein Server', group: { logs: 'Aktivitätsprotokolle', users: 'Sudo-Benutzer', files: 'Dateien', permissions: 'Berechtigungen' } },
@@ -491,7 +491,7 @@ export const translations = {
   },
 
   it: {
-    common: { loading: 'Caricamento…', generating: 'Generazione…', save: 'Salva', saved: 'Salvato', cancel: 'Annulla', search: 'Cerca', all: 'Tutti', today: 'Oggi', days7: '7 giorni', next: 'Avanti', prev: 'Indietro', active: 'attivo', success: 'Successo', failed: 'Non riuscito', applyReload: 'Applica e ricarica', refresh: 'Aggiorna', status: 'Stato', scanning: 'Scansione…' },
+    common: { loading: 'Caricamento…', generating: 'Generazione…', save: 'Salva', saved: 'Salvato', cancel: 'Annulla', search: 'Cerca', all: 'Tutti', today: 'Oggi', days7: '7 giorni', next: 'Avanti', prev: 'Indietro', active: 'attivo', success: 'Successo', failed: 'Non riuscito', applyReload: 'Applica e ricarica', refresh: 'Aggiorna', status: 'Stato', scanning: 'Scansione…', openMenu: 'Apri menu', closeMenu: 'Chiudi menu' },
     sev: { critical: 'Critico', high: 'Alto', medium: 'Medio', low: 'Basso' },
     nav: { dashboard: 'Dashboard', fleet: 'Flotta', audit: 'Audit', sudo: 'Sudo', integrity: 'Integrità', logs: 'Log', terminal: 'Terminale', replays: 'Registrazioni', servers: 'Server', users: 'Utenti', settings: 'Impostazioni', support: 'Supporto' },
     top: { systemHealth: 'Stato del sistema', network: 'Rete', alerts: 'Avvisi', searchPlaceholder: 'Cerca log, utenti o avvisi…', searching: 'Ricerca…', noResults: 'Nessun risultato per "{q}"', serversCount: 'Server ({n})', manage: 'Gestisci', fleetOverview: 'Panoramica flotta', noServer: 'Nessun server', group: { logs: 'Log attività', users: 'Utenti Sudo', files: 'File', permissions: 'Autorizzazioni' } },
@@ -531,7 +531,7 @@ export const translations = {
   },
 
   ru: {
-    common: { loading: 'Загрузка…', generating: 'Создание…', save: 'Сохранить', saved: 'Сохранено', cancel: 'Отмена', search: 'Поиск', all: 'Все', today: 'Сегодня', days7: '7 дней', next: 'Далее', prev: 'Назад', active: 'активно', success: 'Успешно', failed: 'Ошибка', applyReload: 'Применить и перезагрузить', refresh: 'Обновить', status: 'Статус', scanning: 'Сканирование…' },
+    common: { loading: 'Загрузка…', generating: 'Создание…', save: 'Сохранить', saved: 'Сохранено', cancel: 'Отмена', search: 'Поиск', all: 'Все', today: 'Сегодня', days7: '7 дней', next: 'Далее', prev: 'Назад', active: 'активно', success: 'Успешно', failed: 'Ошибка', applyReload: 'Применить и перезагрузить', refresh: 'Обновить', status: 'Статус', scanning: 'Сканирование…', openMenu: 'Открыть меню', closeMenu: 'Закрыть меню' },
     sev: { critical: 'Критический', high: 'Высокий', medium: 'Средний', low: 'Низкий' },
     nav: { dashboard: 'Панель', fleet: 'Флот', audit: 'Аудит', sudo: 'Sudo', integrity: 'Целостность', logs: 'Журналы', terminal: 'Терминал', replays: 'Записи', servers: 'Серверы', users: 'Пользователи', settings: 'Настройки', support: 'Поддержка' },
     top: { systemHealth: 'Состояние системы', network: 'Сеть', alerts: 'Оповещения', searchPlaceholder: 'Поиск журналов, пользователей или оповещений…', searching: 'Поиск…', noResults: 'Нет результатов для «{q}»', serversCount: 'Серверы ({n})', manage: 'Управление', fleetOverview: 'Обзор флота', noServer: 'Нет сервера', group: { logs: 'Журналы активности', users: 'Пользователи Sudo', files: 'Файлы', permissions: 'Разрешения' } },
@@ -571,7 +571,7 @@ export const translations = {
   },
 
   uk: {
-    common: { loading: 'Завантаження…', generating: 'Створення…', save: 'Зберегти', saved: 'Збережено', cancel: 'Скасувати', search: 'Пошук', all: 'Усі', today: 'Сьогодні', days7: '7 днів', next: 'Далі', prev: 'Назад', active: 'активний', success: 'Успіх', failed: 'Помилка', applyReload: 'Застосувати та перезавантажити', refresh: 'Оновити', status: 'Статус', scanning: 'Сканування…' },
+    common: { loading: 'Завантаження…', generating: 'Створення…', save: 'Зберегти', saved: 'Збережено', cancel: 'Скасувати', search: 'Пошук', all: 'Усі', today: 'Сьогодні', days7: '7 днів', next: 'Далі', prev: 'Назад', active: 'активний', success: 'Успіх', failed: 'Помилка', applyReload: 'Застосувати та перезавантажити', refresh: 'Оновити', status: 'Статус', scanning: 'Сканування…', openMenu: 'Відкрити меню', closeMenu: 'Закрити меню' },
     sev: { critical: 'Критичний', high: 'Високий', medium: 'Середній', low: 'Низький' },
     nav: { dashboard: 'Панель', fleet: 'Флот', audit: 'Аудит', sudo: 'Sudo', integrity: 'Цілісність', logs: 'Журнали', terminal: 'Термінал', replays: 'Записи', servers: 'Сервери', users: 'Користувачі', settings: 'Налаштування', support: 'Підтримка' },
     top: { systemHealth: 'Стан системи', network: 'Мережа', alerts: 'Сповіщення', searchPlaceholder: 'Пошук журналів, користувачів або сповіщень…', searching: 'Пошук…', noResults: 'Немає результатів для «{q}»', serversCount: 'Сервери ({n})', manage: 'Керувати', fleetOverview: 'Огляд флоту', noServer: 'Немає сервера', group: { logs: 'Журнали активності', users: 'Користувачі Sudo', files: 'Файли', permissions: 'Дозволи' } },
@@ -611,7 +611,7 @@ export const translations = {
   },
 
   pl: {
-    common: { loading: 'Ładowanie…', generating: 'Generowanie…', save: 'Zapisz', saved: 'Zapisano', cancel: 'Anuluj', search: 'Szukaj', all: 'Wszystkie', today: 'Dziś', days7: '7 dni', next: 'Dalej', prev: 'Wstecz', active: 'aktywny', success: 'Sukces', failed: 'Niepowodzenie', applyReload: 'Zastosuj i przeładuj', refresh: 'Odśwież', status: 'Status', scanning: 'Skanowanie…' },
+    common: { loading: 'Ładowanie…', generating: 'Generowanie…', save: 'Zapisz', saved: 'Zapisano', cancel: 'Anuluj', search: 'Szukaj', all: 'Wszystkie', today: 'Dziś', days7: '7 dni', next: 'Dalej', prev: 'Wstecz', active: 'aktywny', success: 'Sukces', failed: 'Niepowodzenie', applyReload: 'Zastosuj i przeładuj', refresh: 'Odśwież', status: 'Status', scanning: 'Skanowanie…', openMenu: 'Otwórz menu', closeMenu: 'Zamknij menu' },
     sev: { critical: 'Krytyczny', high: 'Wysoki', medium: 'Średni', low: 'Niski' },
     nav: { dashboard: 'Pulpit', fleet: 'Flota', audit: 'Audyt', sudo: 'Sudo', integrity: 'Integralność', logs: 'Dzienniki', terminal: 'Terminal', replays: 'Nagrania', servers: 'Serwery', users: 'Użytkownicy', settings: 'Ustawienia', support: 'Wsparcie' },
     top: { systemHealth: 'Stan systemu', network: 'Sieć', alerts: 'Alerty', searchPlaceholder: 'Szukaj dzienników, użytkowników lub alertów…', searching: 'Wyszukiwanie…', noResults: 'Brak wyników dla „{q}”', serversCount: 'Serwery ({n})', manage: 'Zarządzaj', fleetOverview: 'Przegląd floty', noServer: 'Brak serwera', group: { logs: 'Dzienniki aktywności', users: 'Użytkownicy Sudo', files: 'Pliki', permissions: 'Uprawnienia' } },
@@ -651,7 +651,7 @@ export const translations = {
   },
 
   tr: {
-    common: { loading: 'Yükleniyor…', generating: 'Oluşturuluyor…', save: 'Kaydet', saved: 'Kaydedildi', cancel: 'İptal', search: 'Ara', all: 'Tümü', today: 'Bugün', days7: '7 Gün', next: 'İleri', prev: 'Geri', active: 'etkin', success: 'Başarılı', failed: 'Başarısız', applyReload: 'Uygula ve yeniden yükle', refresh: 'Yenile', status: 'Durum', scanning: 'Taranıyor…' },
+    common: { loading: 'Yükleniyor…', generating: 'Oluşturuluyor…', save: 'Kaydet', saved: 'Kaydedildi', cancel: 'İptal', search: 'Ara', all: 'Tümü', today: 'Bugün', days7: '7 Gün', next: 'İleri', prev: 'Geri', active: 'etkin', success: 'Başarılı', failed: 'Başarısız', applyReload: 'Uygula ve yeniden yükle', refresh: 'Yenile', status: 'Durum', scanning: 'Taranıyor…', openMenu: 'Menüyü aç', closeMenu: 'Menüyü kapat' },
     sev: { critical: 'Kritik', high: 'Yüksek', medium: 'Orta', low: 'Düşük' },
     nav: { dashboard: 'Panel', fleet: 'Filo', audit: 'Denetim', sudo: 'Sudo', integrity: 'Bütünlük', logs: 'Günlükler', terminal: 'Terminal', replays: 'Kayıtlar', servers: 'Sunucular', users: 'Kullanıcılar', settings: 'Ayarlar', support: 'Destek' },
     top: { systemHealth: 'Sistem Durumu', network: 'Ağ', alerts: 'Uyarılar', searchPlaceholder: 'Günlük, kullanıcı veya uyarı ara…', searching: 'Aranıyor…', noResults: '"{q}" için sonuç yok', serversCount: 'Sunucular ({n})', manage: 'Yönet', fleetOverview: 'Filo Genel Bakışı', noServer: 'Sunucu yok', group: { logs: 'Etkinlik Günlükleri', users: 'Sudo Kullanıcıları', files: 'Dosyalar', permissions: 'İzinler' } },
@@ -691,7 +691,7 @@ export const translations = {
   },
 
   vi: {
-    common: { loading: 'Đang tải…', generating: 'Đang tạo…', save: 'Lưu', saved: 'Đã lưu', cancel: 'Hủy', search: 'Tìm kiếm', all: 'Tất cả', today: 'Hôm nay', days7: '7 ngày', next: 'Tiếp', prev: 'Trước', active: 'hoạt động', success: 'Thành công', failed: 'Thất bại', applyReload: 'Áp dụng & tải lại', refresh: 'Làm mới', status: 'Trạng thái', scanning: 'Đang quét…' },
+    common: { loading: 'Đang tải…', generating: 'Đang tạo…', save: 'Lưu', saved: 'Đã lưu', cancel: 'Hủy', search: 'Tìm kiếm', all: 'Tất cả', today: 'Hôm nay', days7: '7 ngày', next: 'Tiếp', prev: 'Trước', active: 'hoạt động', success: 'Thành công', failed: 'Thất bại', applyReload: 'Áp dụng & tải lại', refresh: 'Làm mới', status: 'Trạng thái', scanning: 'Đang quét…', openMenu: 'Mở menu', closeMenu: 'Đóng menu' },
     sev: { critical: 'Nghiêm trọng', high: 'Cao', medium: 'Trung bình', low: 'Thấp' },
     nav: { dashboard: 'Bảng điều khiển', fleet: 'Đội máy', audit: 'Kiểm toán', sudo: 'Sudo', integrity: 'Toàn vẹn', logs: 'Nhật ký', terminal: 'Terminal', replays: 'Bản ghi', servers: 'Máy chủ', users: 'Người dùng', settings: 'Cài đặt', support: 'Hỗ trợ' },
     top: { systemHealth: 'Tình trạng hệ thống', network: 'Mạng', alerts: 'Cảnh báo', searchPlaceholder: 'Tìm nhật ký, người dùng hoặc cảnh báo…', searching: 'Đang tìm…', noResults: 'Không có kết quả cho "{q}"', serversCount: 'Máy chủ ({n})', manage: 'Quản lý', fleetOverview: 'Tổng quan đội máy', noServer: 'Không có máy chủ', group: { logs: 'Nhật ký hoạt động', users: 'Người dùng Sudo', files: 'Tệp', permissions: 'Quyền' } },
@@ -731,7 +731,7 @@ export const translations = {
   },
 
   th: {
-    common: { loading: 'กำลังโหลด…', generating: 'กำลังสร้าง…', save: 'บันทึก', saved: 'บันทึกแล้ว', cancel: 'ยกเลิก', search: 'ค้นหา', all: 'ทั้งหมด', today: 'วันนี้', days7: '7 วัน', next: 'ถัดไป', prev: 'ก่อนหน้า', active: 'ใช้งาน', success: 'สำเร็จ', failed: 'ล้มเหลว', applyReload: 'ใช้และโหลดใหม่', refresh: 'รีเฟรช', status: 'สถานะ', scanning: 'กำลังสแกน…' },
+    common: { loading: 'กำลังโหลด…', generating: 'กำลังสร้าง…', save: 'บันทึก', saved: 'บันทึกแล้ว', cancel: 'ยกเลิก', search: 'ค้นหา', all: 'ทั้งหมด', today: 'วันนี้', days7: '7 วัน', next: 'ถัดไป', prev: 'ก่อนหน้า', active: 'ใช้งาน', success: 'สำเร็จ', failed: 'ล้มเหลว', applyReload: 'ใช้และโหลดใหม่', refresh: 'รีเฟรช', status: 'สถานะ', scanning: 'กำลังสแกน…', openMenu: 'เปิดเมนู', closeMenu: 'ปิดเมนู' },
     sev: { critical: 'วิกฤต', high: 'สูง', medium: 'ปานกลาง', low: 'ต่ำ' },
     nav: { dashboard: 'แดชบอร์ด', fleet: 'ฟลีต', audit: 'ตรวจสอบ', sudo: 'Sudo', integrity: 'ความสมบูรณ์', logs: 'บันทึก', terminal: 'เทอร์มินัล', replays: 'การบันทึก', servers: 'เซิร์ฟเวอร์', users: 'ผู้ใช้', settings: 'การตั้งค่า', support: 'สนับสนุน' },
     top: { systemHealth: 'สถานะระบบ', network: 'เครือข่าย', alerts: 'การแจ้งเตือน', searchPlaceholder: 'ค้นหาบันทึก ผู้ใช้ หรือการแจ้งเตือน…', searching: 'กำลังค้นหา…', noResults: 'ไม่พบผลลัพธ์สำหรับ "{q}"', serversCount: 'เซิร์ฟเวอร์ ({n})', manage: 'จัดการ', fleetOverview: 'ภาพรวมฟลีต', noServer: 'ไม่มีเซิร์ฟเวอร์', group: { logs: 'บันทึกกิจกรรม', users: 'ผู้ใช้ Sudo', files: 'ไฟล์', permissions: 'สิทธิ์' } },
@@ -771,7 +771,7 @@ export const translations = {
   },
 
   nl: {
-    common: { loading: 'Laden…', generating: 'Genereren…', save: 'Opslaan', saved: 'Opgeslagen', cancel: 'Annuleren', search: 'Zoeken', all: 'Alle', today: 'Vandaag', days7: '7 dagen', next: 'Volgende', prev: 'Vorige', active: 'actief', success: 'Gelukt', failed: 'Mislukt', applyReload: 'Toepassen & herladen', refresh: 'Vernieuwen', status: 'Status', scanning: 'Scannen…' },
+    common: { loading: 'Laden…', generating: 'Genereren…', save: 'Opslaan', saved: 'Opgeslagen', cancel: 'Annuleren', search: 'Zoeken', all: 'Alle', today: 'Vandaag', days7: '7 dagen', next: 'Volgende', prev: 'Vorige', active: 'actief', success: 'Gelukt', failed: 'Mislukt', applyReload: 'Toepassen & herladen', refresh: 'Vernieuwen', status: 'Status', scanning: 'Scannen…', openMenu: 'Menu openen', closeMenu: 'Menu sluiten' },
     sev: { critical: 'Kritiek', high: 'Hoog', medium: 'Gemiddeld', low: 'Laag' },
     nav: { dashboard: 'Dashboard', fleet: 'Vloot', audit: 'Audit', sudo: 'Sudo', integrity: 'Integriteit', logs: 'Logboeken', terminal: 'Terminal', replays: 'Opnamen', servers: 'Servers', users: 'Gebruikers', settings: 'Instellingen', support: 'Ondersteuning' },
     top: { systemHealth: 'Systeemstatus', network: 'Netwerk', alerts: 'Meldingen', searchPlaceholder: 'Zoek logboeken, gebruikers of meldingen…', searching: 'Zoeken…', noResults: 'Geen resultaten voor "{q}"', serversCount: 'Servers ({n})', manage: 'Beheren', fleetOverview: 'Vlootoverzicht', noServer: 'Geen server', group: { logs: 'Activiteitenlogboeken', users: 'Sudo-gebruikers', files: 'Bestanden', permissions: 'Machtigingen' } },

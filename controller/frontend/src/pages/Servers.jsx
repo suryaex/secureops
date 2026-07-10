@@ -101,7 +101,7 @@ export default function Servers() {
                   s.last_status === 'offline' ? 'bg-danger' : 'bg-gray-300'
                 }`} />
                 <span className="text-gray-800 font-semibold text-sm truncate">{s.name}</span>
-                {s.is_local && <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-bold uppercase shrink-0">local</span>}
+                {s.is_local && <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-bold uppercase shrink-0">{t('servers.local')}</span>}
               </div>
               <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold border shrink-0 ${STATUS_BADGE[s.last_status] || STATUS_BADGE.unknown}`}>
                 {s.is_local ? t('servers.local') : t(`servers.${s.last_status}`)}
@@ -163,7 +163,7 @@ export default function Servers() {
                         s.last_status === 'offline' ? 'bg-danger' : 'bg-gray-300'
                       }`} />
                       <span className="text-gray-800 font-medium text-sm">{s.name}</span>
-                      {s.is_local && <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-bold uppercase">local</span>}
+                      {s.is_local && <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-bold uppercase">{t('servers.local')}</span>}
                     </div>
                   </td>
                   <td className="text-gray-600 text-xs font-mono">{s.hostname}</td>

@@ -84,7 +84,7 @@ export default function TopBar({ onMenuClick }) {
       <button
         className="lg:hidden p-2 rounded-xl text-gray-500 hover:bg-gray-100 transition-colors shrink-0"
         onClick={onMenuClick}
-        aria-label="Open menu"
+        aria-label={t('common.openMenu')}
       >
         <span className="material-symbols-outlined text-xl">menu</span>
       </button>
@@ -164,7 +164,7 @@ export default function TopBar({ onMenuClick }) {
                       <p className="text-xs text-gray-400 truncate">{s.hostname}</p>
                     </div>
                     {s.is_local && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-bold uppercase">local</span>
+                      <span className="text-[10px] px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded font-bold uppercase">{t('servers.local')}</span>
                     )}
                     {s.id === serverId && <span className="material-symbols-outlined text-primary text-base">check</span>}
                   </button>
@@ -210,7 +210,7 @@ export default function TopBar({ onMenuClick }) {
             </span>
           )}
         </Link>
-        <Link to="/system-health" className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl hover:bg-gray-50 text-gray-500 transition-colors" title="System Health">
+        <Link to="/system-health" className="hidden sm:flex w-9 h-9 items-center justify-center rounded-xl hover:bg-gray-50 text-gray-500 transition-colors" title={t('top.systemHealth')}>
           <span className="material-symbols-outlined text-xl">security</span>
         </Link>
 
