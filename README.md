@@ -1,257 +1,121 @@
-# SecureOps — Platform Monitoring Keamanan Multi-Server
+<div align="center">
 
-**Politeknik Negeri Sriwijaya · Jurusan Teknik Elektro · Prodi D4 Teknik Telekomunikasi**
-Pengembang: **Muhammad Surya Ragasin**
+# SecureOps
 
-> Pantau **banyak server** (Linux/Windows/macOS) dari **satu dashboard glassmorphism**.
-> Login pakai akun OS asli via **PAM**, akses lewat browser, install sebagai **PWA**,
-> atau bangun **APK/IPA** native dengan Capacitor. Jalan **native** atau **Docker**,
-> di **x86-64 maupun ARM** (Raspberry Pi / Orange Pi).
+**Self-hosted multi-server security monitoring platform**
 
-```
-                     🌍 https://secureops.site
-                                │  (Cloudflare Tunnel → nginx, HTTPS)
-                          ┌─────▼──────┐
-                          │ Controller │  FastAPI + React + SQLite · Auth: PAM → JWT
-                          └─────┬──────┘
-            Tailscale/WireGuard │  (X-Agent-Key)            ┌── LogSync ──┐
-        ┌───────────┬───────────┼───────────┐               │ ARM / MCU   │→ HTTP
-    ┌───▼───┐   ┌───▼───┐   ┌───▼───┐                       │ Router/SW/FW│→ syslog
-    │ Agent │   │ Agent │   │ Agent │  (Linux/Win/macOS)    └──────┬──────┘
-    └───────┘   └───────┘   └───────┘                              ▼ backup → StorageHub
-```
+*PAM login · real-time agents · glassmorphism dashboard — one lightweight stack.*
 
-> **Lisensi:** penggunaan **khusus internal Politeknik Negeri Sriwijaya** — lihat [LICENSE](LICENSE).
+![Version](https://img.shields.io/badge/version-1.2.8-brightgreen)
+![License](https://img.shields.io/badge/license-Polsri--Internal-red)
+![Python](https://img.shields.io/badge/python-3.12+-blue)
+![React](https://img.shields.io/badge/react-18-61dafb)
+![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey)
+
+</div>
 
 ---
 
-## 📂 Struktur
+## Installation
 
-| Folder | Kegunaan |
-|--------|----------|
-| `controller/` | Backend FastAPI + UI React + nginx + Docker (server pusat) |
-| `agent-linux/` | Agent semua distro Linux (apt/dnf/yum/zypper/pacman/apk) + Docker — x86-64 & ARM |
-| `agent-windows/` | Agent Windows 10/11 & Server 2019+ |
-| `agent-macos/` | Agent macOS 12+ (Intel & Apple Silicon) |
+**Prerequisites:** Git, Docker + Docker Compose, free port **80** (override with `SECUREOPS_HTTP_PORT`).
+On Linux the installer auto-installs Docker (Fedora, Ubuntu, Debian, RHEL, Arch); on Windows/macOS install Docker Desktop first.
 
-> Berkas Docker di root: `install.sh` (one-shot) · `Makefile` · `docker-compose.yml` + `docker-compose.prod.yml` · `.env.example` · `uninstall.sh`.
-
-## ✨ Fitur
-- 🔐 **Login Linux PAM** (anggota `sudo`/`wheel` → admin; lainnya auditor read-only) + login email/DB.
-- 🌐 **Satu domain, banyak server** — Controller proxy ke tiap agent lewat mesh Tailscale.
-- 🎨 **UI Luminous Security** (glassmorphism, Apple-blue), 📱 **PWA** + Capacitor.
-- 📊 Modul: Dashboard · Permission Audit · Sudo Monitor · File Integrity · Activity Logs · System Health.
-- 🖥️ **Terminal SSH live** (PTY via WebSocket) + 🎬 **recording** (asciinema) & playback.
-- ⚡ **Auto-register agent** (one-liner, mirip Tailscale auth-key).
-- 🔌 **LogSync** — kumpulkan log ARM/mikrokontroler (HTTP) & appliance jaringan (syslog) → backup ke **StorageHub**.
-- 🛡️ Hardening: JWT secret non-default, security headers, rate-limit, ingest ber-kunci.
-- 🔄 **Update dari aplikasi** — Settings → *Software update* cek rilis terbaru di GitHub,
-  admin tinggal klik **Update & restart** (pull → rebuild → restart). Lihat
-  [`docs/SELF_UPDATE.md`](docs/SELF_UPDATE.md).
-
----
-
-# 🚀 Instalasi
-
-Ada **dua cara**: **Docker** (paling ringkas, semua dependensi di dalam image) atau
-**Native** (systemd + nginx, mendukung login PAM penuh). Pilih salah satu.
-
-### Prasyarat
-- **Git** + **Docker & Docker Compose** (Docker untuk cara **A**; installer Linux bisa auto-pasang).
-- Akses **`sudo`** (pasang Docker / paket, login PAM).
-- Port **80** bebas di host controller (atau atur di nginx).
-- Cara **Native** (B) butuh Linux dengan **systemd** + **PAM** untuk login akun OS asli.
-
-## A. Controller — Docker (lightweight) ⭐
-
-Tiga image kecil (**backend + frontend + nginx**) berbagi base `python:3.12-slim`
-& `nginx:alpine` — setup sama seperti StorageHub. **Satu perintah** (auto-pasang
-Docker, generate `.env` + secret, deteksi LAN/Tailscale, build, tunggu health):
+**One command:**
 
 ```bash
 git clone https://github.com/suryaex/secureops.git
 cd secureops
-./install.sh            # atau:  make install
-#  opsi: --prod (restart=always + log rotation) · --tailscale · --public · --down · --reset
+./install.sh
 ```
 
-Installer mencetak URL + password admin (login user `admin`). Karena container tidak
-melihat akun host, **login pakai admin DB**; untuk login **PAM** akun OS asli pakai
-cara **Native** di bawah.
+The installer generates secrets, builds the stack (FastAPI backend + React frontend behind nginx), waits for `/api/health`, and prints the URLs + admin password:
 
-**Manual:** `cp .env.example .env` (isi `SECUREOPS_JWT_SECRET`/`SECUREOPS_ADMIN_PASSWORD`) → `docker compose up -d --build`.
-**Image siap-pakai (GHCR, multi-arch amd64+arm64):**
-```bash
-docker compose pull && docker compose up -d   # ghcr.io/suryaex/secureops-{backend,web}:latest
 ```
-> Pertama kali, set package GHCR ke **public** (atau `docker login ghcr.io`).
+On this machine  ->  http://localhost
+On the network   ->  http://<LAN-IP>
+Login: user 'admin' / password: <printed once>
+```
 
-### Daftar perintah (Docker)
+**Common options:**
 
-| Perintah | Fungsi |
+| Command | Effect |
 |---|---|
-| `git clone https://github.com/suryaex/secureops.git && cd secureops` | Ambil sumber |
-| `./install.sh` | Pasang + build + start (auto Docker, `.env`+secret, deteksi LAN) |
-| `make install` | Sama seperti `./install.sh` |
-| `./install.sh --prod` | Produksi (`restart=always` + log rotation) |
-| `./install.sh --tailscale` | Join Tailscale, bind ke IP VPN-nya |
-| `./install.sh --public` | Deteksi IP publik & tambah ke CORS |
-| `./install.sh --down` | Stop stack |
-| `./install.sh --reset` | Stop + **HAPUS** semua data |
-| `docker compose pull && docker compose up -d` | Jalankan dari image GHCR (tanpa build) |
-| `docker compose logs -f` | Lihat log live |
+| `./install.sh` | Build + start (auto Docker, generate `.env`, detect LAN) |
+| `./install.sh --prod` | Production overlay (`restart=always` + log rotation) |
+| `./install.sh --rebuild` | Force rebuild — no cache |
+| `./install.sh --tailscale` | Join Tailscale, bind to its VPN IP |
+| `./install.sh --public` | Detect public IP and add to CORS |
+| `./install.sh --down` | Stop the stack |
+| `./install.sh --reset` | Stop and delete all data (volumes) |
+| `./install.sh --reset --yes` | Same, skip confirmation (CI/scripts) |
+| `./install.sh --no-updater` | Skip in-app "Update & restart" host watcher |
+| `SECUREOPS_HTTP_PORT=8080 ./install.sh` | Use a different port |
+| `./uninstall.sh` | Remove services + files, keep database |
+| `./uninstall.sh --purge` | Full clean — also remove database, configs, logs, user |
+| `./uninstall.sh --yes` | Skip confirmation prompt |
 
-## B. Controller — Native (systemd + nginx, login PAM)
+> **Native install (PAM login):** `sudo bash controller/deploy/deploy-prod.sh` — runs on systemd + nginx without Docker; full Linux PAM login support.
 
-Satu perintah, lintas distro (Ubuntu/Debian/Mint/Pop!/Fedora/RHEL/Rocky/Alma/openSUSE/Arch)
-dan ARM (Pi/Orange Pi):
+<details>
+<summary>Run backend / frontend directly (development)</summary>
 
 ```bash
-git clone https://github.com/suryaex/secureops.git
-cd secureops
-sudo SERVER_NAME=secureops.site bash controller/deploy/deploy-prod.sh
-# HTTPS:
-sudo certbot --nginx -d secureops.site      # atau pakai Cloudflare Tunnel (lihat bawah)
+# Backend
+cd controller/backend
+python3.12 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000   # http://localhost:8000/docs
+
+# Frontend
+cd controller/frontend
+npm install
+npm run dev                             # http://localhost:5173
 ```
 
-## C. Tambah Agent (zero-touch)
-
-**Cara termudah:** UI → **Servers → + Add Server** → salin one-liner yang muncul →
-tempel di server target → agent meng-install & auto-register sendiri.
-
-**Agent Linux — Native:** one-liner di atas, atau manual:
-```bash
-sudo bash agent-linux/deploy/install.sh
-```
-
-**Agent Linux — Docker** (PID & network host agar lihat proses/port host asli):
-```bash
-cd agent-linux
-SECUREOPS_AGENT_KEY=<shared-secret> docker compose up -d --build
-```
-> Audit file-integrity/sudoers paling lengkap dengan install **native**; versi Docker
-> melihat `/proc` host (proses, CPU, port) dan host fs read-only di `/host`.
-
-**Agent Windows** (PowerShell sebagai Administrator):
-```powershell
-iwr "https://secureops.site/api/servers/install-script/<token>?os=windows" -UseBasicParsing | iex
-```
-
-**Agent macOS:**
-```bash
-sudo bash agent-macos/deploy/install.sh
-```
-
-> **Agent Windows & macOS hanya tersedia native** (installer di repo). Tidak ada
-> versi Docker: Windows butuh akses host + ConPTY, dan macOS tidak bisa di-container-kan.
-> Agent **Docker** hanya untuk Linux (`ghcr.io/suryaex/secureops-agent`).
-
-## D. Domain & HTTPS (Cloudflare Tunnel)
-
-Tanpa IP publik pun bisa. Ringkas:
-```bash
-cloudflared tunnel login
-cloudflared tunnel create secureops
-# isi /etc/cloudflared/config.yml (UUID + service http://localhost:80), lalu:
-cloudflared tunnel route dns secureops secureops.site
-sudo cloudflared service install && sudo systemctl enable --now cloudflared
-```
-Set CORS controller bila perlu: `SECUREOPS_CORS_ORIGINS=https://secureops.site,capacitor://localhost`.
-
-## E. Akses publik / VPN (Tailscale)
-
-Controller di-front nginx (`server_name _`) → reachable di alamat apa pun (LAN, IP publik, VPN).
-Untuk lintas-jaringan, pasang Tailscale lalu install agent via IP Tailscale:
-```bash
-curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up
-```
-Installer agent otomatis memilih IP Tailscale + probing multi-kandidat (LAN/VPN).
-
-## F. Mobile (PWA / APK / IPA)
-
-- **PWA:** buka situs di Android/iOS → *Add to Home Screen*.
-- **Native:** `cd controller/frontend && npx cap add android && npx cap sync && npx cap open android`.
+</details>
 
 ---
 
-# 🔌 Ekstensi LogSync (opsional)
+## Features
 
-Backup log perangkat kecil & appliance ke **StorageHub**. Semua **mati default**, aktifkan via env controller lalu restart:
+- **PAM login** — authenticate with real OS accounts via Linux PAM. Members of `sudo`/`wheel` get admin access; all others are read-only auditors. Email/DB login also supported.
 
-```bash
-SECUREOPS_STORAGEHUB_URL=http://<storagehub>:8080
-SECUREOPS_STORAGEHUB_API_KEY=<SERVICE_API_KEYS milik StorageHub>
-SECUREOPS_LOGSYNC_INTERVAL_MIN=15      # 0 = matikan scheduler
-SECUREOPS_SYSLOG_ENABLED=1             # collector router/switch/firewall
-SECUREOPS_SYSLOG_PORT=5514
-```
+- **Multi-server monitoring** — Controller proxies to per-host Agents over a Tailscale/WireGuard mesh (`X-Agent-Key`). One-liner agent registration (Tailscale-style auth key).
 
-- **Mikrokontroler/ARM (HTTP):** daftar device → `POST /api/logsync/devices` (admin) → dapat `device_key`. Kirim log:
-  ```bash
-  curl -X POST https://secureops.site/api/logsync/ingest \
-    -H "X-Device-Id: sensor-01" -H "X-Device-Key: <key>" \
-    -H "Content-Type: application/json" -d '{"message":"suhu=41C","severity":"warning"}'
-  ```
-- **Router/switch/firewall (syslog):** arahkan ke `udp://<controller>:5514`
-  (Cisco `logging host <ip> transport udp port 5514`; MikroTik/pfSense/OpenWRT serupa).
+- **Dashboard modules** — Dashboard · Permission Audit · Sudo Monitor · File Integrity · Activity Logs · System Health — all streaming from live agents.
 
-Endpoint admin (JWT): `GET /api/logsync/status` · `POST /api/logsync/backup/run` ·
-`GET|POST /api/logsync/devices` · `GET /api/logsync/logs`.
+- **Live SSH terminal** — PTY over WebSocket with asciinema session recording and in-browser playback.
+
+- **LogSync** — collect logs from ARM/microcontrollers (HTTP) and network appliances (syslog: Cisco, MikroTik, pfSense, OpenWRT), then back up to StorageHub.
+
+- **In-app self-update** — Settings → *Software update* pulls the latest GitHub release, rebuilds, and restarts; works on Docker and bare-metal native installs.
+
+- **PWA + Mobile** — installable as a Progressive Web App on Android/iOS, or build a native APK/IPA with Capacitor (`npx cap add android`).
+
+- **Security hardening** — JWT secret never hardcoded, security headers on every response (`nosniff`, `X-Frame-Options: DENY`, Referrer/Permissions-Policy), rate limiting, constant-time key comparison on ingest endpoints.
+
+- **Cross-platform agents** — Linux (x86-64 and ARM: Raspberry Pi, Orange Pi), Windows 10/11 + Server, macOS 12–15 (Intel and Apple Silicon).
 
 ---
 
-# 🔒 Keamanan
+## Tech Stack
 
-SecureOps sudah aman secara default; untuk produksi set:
-```bash
-SECUREOPS_JWT_SECRET=$(openssl rand -base64 48)   # tanpa ini, di-generate & disimpan (chmod 600)
-SECUREOPS_ADMIN_PASSWORD=<password-kuat>          # tanpa ini, random dicetak SEKALI ke log
-SECUREOPS_BEHIND_PROXY=1                           # percaya X-Forwarded-* dari nginx
-SECUREOPS_ENABLE_HSTS=1                            # hanya saat HTTPS penuh
-SECUREOPS_CORS_ORIGINS=https://secureops.site,capacitor://localhost
-```
-- JWT secret **tidak pernah** hardcoded; security headers (`nosniff`, `DENY`, Referrer/Permissions-Policy) di tiap response.
-- Auth agent shared-key (`X-Agent-Key`, URL-encoded); join token sekali-pakai di DB.
-- LogSync ingest: kunci per-device (compare konstan-waktu), rate-limit, batas ukuran.
-- Terminasi TLS di nginx/Cloudflare; jangan expose port backend/agent ke internet (pakai mesh).
+**Backend:** Python 3.12+, FastAPI (async), SQLite, Gunicorn + Uvicorn.
+**Frontend:** React 18 + TypeScript, Vite, Tailwind CSS, Capacitor (PWA/mobile).
+**Infra:** Docker + Docker Compose behind nginx. Cloudflare Tunnel for HTTPS without a public IP.
 
 ---
 
-# 🧹 Uninstall (sebelum major update / ganti versi)
+## Coexisting with StorageHub
 
-```bash
-# Controller / agent Linux (auto-deteksi):
-sudo bash uninstall.sh            # hapus service & file, DATABASE DISIMPAN
-sudo bash uninstall.sh --purge    # sekalian hapus DB, config, log, user
-
-# Docker:
-./install.sh --down               # controller stop  (--reset hapus volume; atau: make down)
-cd agent-linux && docker compose down
-
-# Windows (PowerShell admin):
-powershell -ExecutionPolicy Bypass -File agent-windows\deploy\uninstall.ps1   # -Purge utk hapus data
-# macOS:
-sudo bash agent-macos/deploy/uninstall.sh                                     # --purge
-```
+SecureOps uses ports **`:80` / `:8000`**; StorageHub uses **`:8080` / `:8010`** — both can run on the same host without conflict and share a Docker base image (`python:3.12-slim`). LogSync backs SecureOps logs into StorageHub automatically.
 
 ---
 
-# 🤝 Coexist dengan StorageHub
+## License
 
-SecureOps memakai port **`:80`/`:443`** + backend **`:8000`**; **StorageHub** memakai
-**`:8080`** + **`:8010`**, sehingga keduanya bisa jalan **di host yang sama** tanpa bentrok
-dan berbagi base image Docker (`python:3.12-slim`). LogSync mem-backup log SecureOps ke StorageHub.
+**Internal use only — Politeknik Negeri Sriwijaya.**
+This software is not licensed for redistribution or use outside Polsri. For external use, contact the developer via Jurusan Teknik Elektro, Politeknik Negeri Sriwijaya.
 
----
-
-# 🖥️ OS yang Didukung
-
-**Linux (agent & controller):** Ubuntu/Debian/Mint/Pop!/Elementary/Kali · Fedora/RHEL/Rocky/Alma ·
-openSUSE/SLES · Arch/Manjaro · Alpine (OpenRC) — **x86-64 & ARM (arm64/armv7)**.
-**Windows:** 10 (1809+)/11 · Server 2019/2022. **macOS:** 12–15 (Intel & Apple Silicon).
-
----
-
-## 📄 Lisensi
-Penggunaan **khusus internal Politeknik Negeri Sriwijaya**. Lihat [LICENSE](LICENSE).
-Untuk redistribusi/penggunaan di luar Polsri, hubungi pengembang via Jurusan Teknik Elektro.
+© Muhammad Surya Ragasin — D4 Teknik Telekomunikasi, Politeknik Negeri Sriwijaya.

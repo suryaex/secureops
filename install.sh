@@ -13,6 +13,7 @@
 #   ./install.sh --tailscale  # install + join Tailscale, use its VPN IP
 #   ./install.sh --public     # auto-detect public IP and add it to CORS
 #   ./install.sh --no-updater # skip the in-app "Update & restart" host watcher
+#   ./install.sh --reset --yes # skip confirmation prompt (for scripts/CI)
 # Env: SECUREOPS_HTTP_PORT (default 80), PUBLIC_HOST=<domain>, PUBLIC_IP=<ip>,
 #      SECUREOPS_STATE_DIR (default /var/lib/secureops; update trigger/status)
 #
@@ -29,12 +30,12 @@ ok()    { echo -e "${GREEN}✓${NC} $*"; }
 warn()  { echo -e "${YELLOW}!${NC} $*"; }
 err()   { echo -e "${RED}✗${NC} $*" >&2; }
 
-ACTION="up"; PROD=0; TAILSCALE=0; PUBLIC_DETECT=0; UPDATER=1
+ACTION="up"; PROD=0; TAILSCALE=0; PUBLIC_DETECT=0; UPDATER=1; ASSUME_YES=0
 for a in "$@"; do case "$a" in
   --down) ACTION="down" ;; --reset) ACTION="reset" ;;
   --rebuild) ACTION="rebuild" ;; --no-build) ACTION="nobuild" ;;
   --prod) PROD=1 ;; --tailscale) TAILSCALE=1 ;; --public) PUBLIC_DETECT=1 ;;
-  --no-updater) UPDATER=0 ;;
+  --no-updater) UPDATER=0 ;; --yes|-y) ASSUME_YES=1 ;;
 esac; done
 
 STATE_DIR="${SECUREOPS_STATE_DIR:-/var/lib/secureops}"
@@ -179,8 +180,11 @@ CF="-f docker-compose.yml"
 [ "$PROD" = "1" ] && [ -f docker-compose.prod.yml ] && CF="$CF -f docker-compose.prod.yml"
 
 if [ "$ACTION" = "down" ];  then ensure_docker; detect_compose; info "Stopping…"; $COMPOSE $CF down; ok "Stopped."; exit 0; fi
-if [ "$ACTION" = "reset" ]; then ensure_docker; detect_compose; warn "This deletes ALL data (database volume)!";
-  read -r -p "Type 'yes' to continue: " c; [ "$c" = "yes" ] && $COMPOSE $CF down -v && ok "Reset done." || echo "Aborted."; exit 0; fi
+if [ "$ACTION" = "reset" ]; then ensure_docker; detect_compose; warn "This deletes ALL data (database volume)!"
+  if [ "$ASSUME_YES" != "1" ]; then
+    read -r -p "Type 'yes' to continue: " c; [ "$c" != "yes" ] && { echo "Aborted."; exit 0; }
+  fi
+  $COMPOSE $CF down -v && ok "Reset done."; exit 0; fi
 
 echo ""
 echo "  ╭──────────────────────────────────────────────╮"
