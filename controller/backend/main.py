@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from database import engine, SessionLocal
 import models
-from appversion import APP_VERSION
+from appversion import APP_VERSION, APP_CHANNEL
 from auth import hash_password, AGENT_MODE
 from routers import (
     auth,
@@ -210,6 +210,7 @@ def health():
         "status":   "ok",
         "service":  "SecureOps API",
         "version":  APP_VERSION,
+        "channel":  APP_CHANNEL,
         "mode":     "agent" if AGENT_MODE else "controller",
         "hostname": socket.gethostname(),
     }

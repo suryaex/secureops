@@ -6,4 +6,5 @@ pipeline injects a different tag.
 """
 import os
 
-APP_VERSION = os.getenv("SECUREOPS_VERSION", "1.2.9")
+APP_VERSION = os.getenv("SECUREOPS_VERSION", "1.2.10")
+APP_CHANNEL = "alpha"

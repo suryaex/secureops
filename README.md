@@ -6,7 +6,8 @@
 
 *PAM login · real-time agents · glassmorphism dashboard — one lightweight stack.*
 
-![Version](https://img.shields.io/badge/version-1.2.9-brightgreen)
+![Version](https://img.shields.io/badge/version-1.2.10-brightgreen)
+![Channel](https://img.shields.io/badge/channel-alpha-orange)
 ![License](https://img.shields.io/badge/license-Polsri--Internal-red)
 ![Python](https://img.shields.io/badge/python-3.12+-blue)
 ![React](https://img.shields.io/badge/react-18-61dafb)
@@ -21,7 +22,19 @@
 **Prerequisites:** Git, Docker + Docker Compose, free port **80** (override with `SECUREOPS_HTTP_PORT`).
 On Linux the installer auto-installs Docker (Fedora, Ubuntu, Debian, RHEL, Arch); on Windows/macOS install Docker Desktop first.
 
-**One command:**
+**One command (Linux):**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/suryaex/secureops/main/bootstrap.sh | bash
+```
+
+Pass extra flags straight through:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/suryaex/secureops/main/bootstrap.sh | bash -s -- --prod
+```
+
+**Manual:**
 
 ```bash
 git clone https://github.com/suryaex/secureops.git
