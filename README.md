@@ -6,7 +6,7 @@
 
 *PAM login · real-time agents · glassmorphism dashboard — one lightweight stack.*
 
-![Version](https://img.shields.io/badge/version-1.2.8-brightgreen)
+![Version](https://img.shields.io/badge/version-1.2.9-brightgreen)
 ![License](https://img.shields.io/badge/license-Polsri--Internal-red)
 ![Python](https://img.shields.io/badge/python-3.12+-blue)
 ![React](https://img.shields.io/badge/react-18-61dafb)
