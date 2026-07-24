@@ -31,3 +31,6 @@ secureops.db
 # ── OS noise ──
 .DS_Store
 Thumbs.db
+
+# Dev/design docs are local-only (never pushed)
+docs/
