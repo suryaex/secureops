@@ -1,7 +1,10 @@
-.PHONY: install up prod down reset rebuild build logs ps clean
+.PHONY: install up prod down reset rebuild build logs ps clean test
 
 install:      ## One-shot Docker installer (generates .env, builds, starts, waits health)
 	@bash install.sh
+
+test:         ## Run the backend test suite (needs: pip install -r controller/backend/requirements*.txt)
+	cd controller/backend && python3 -m pytest
 
 up:           ## Build & start the controller stack
 	docker compose up -d --build

@@ -1,0 +1,4 @@
+# Test-only extras. Install alongside requirements.txt:
+#   pip install -r requirements.txt -r requirements-dev.txt
+pytest>=8.0,<9.0
+httpx>=0.25,<1.0
